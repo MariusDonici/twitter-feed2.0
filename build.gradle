@@ -1,0 +1,16 @@
+group 'ro.uaic.twitter'
+version '1.0-SNAPSHOT'
+
+buildscript {
+    ext {
+        springBootVersion = '2.0.1.RELEASE'
+        jacksonVersion = '2.9.5'
+    }
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath(
+                "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+}

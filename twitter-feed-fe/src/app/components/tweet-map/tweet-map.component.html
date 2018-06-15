@@ -1,0 +1,12 @@
+<agm-map #AgmMap [latitude]="latitude" [longitude]="longitude" (boundsChange)="handleBoundsChange($event)">
+  <agm-marker-cluster imagePath="https://raw.githubusercontent.com/googlemaps/v3-utility-library/master/markerclustererplus/images/m">
+    <agm-marker *ngFor="let marker of markers" [latitude]="marker.coords.latitude" [longitude]="marker.coords.longitude">
+
+    </agm-marker>
+
+  </agm-marker-cluster>
+</agm-map>
+
+<div>
+  {{tweetList.length}}
+</div>

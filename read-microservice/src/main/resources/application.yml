@@ -1,0 +1,9 @@
+server:
+  port: 9005
+
+spring:
+  data:
+    mongodb:
+      database: twitter
+      host: localhost
+      port: 27017

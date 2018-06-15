@@ -1,0 +1,5 @@
+rootProject.name = 'parent-module'
+include 'core'
+include 'collector'
+include 'read-microservice'
+
