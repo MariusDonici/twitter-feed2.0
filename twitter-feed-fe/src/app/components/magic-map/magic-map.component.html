@@ -1,0 +1,32 @@
+<div *ngIf="loading">
+  <img class="loader" src="https://media.giphy.com/media/rDeOjM6DZ1qda/giphy.gif" width="128" height="128">
+</div>
+
+<!-- <div *ngIf="!loading">
+  <div id="myMap" leaflet [leafletOptions]="options" [leafletMarkerCluster]="markerClusterData" [leafletMarkerClusterOptions]="markerClusterOptions"
+    (leafletMarkerClusterReady)="markerClusterReady($event)" (leafletMapReady)="onMapReady($event)">
+  </div>
+</div> -->
+<div *ngIf="isDataLoaded()">
+  <div class="map-wrapper">
+    <ngx-loading [show]="!markersLoaded" [config]="{ backdropBorderRadius: '14px' }"></ngx-loading>
+    <div id="myMap" leaflet [leafletOptions]="options" [leafletMarkerCluster]="markerClusterData"
+     [leafletMarkerClusterOptions]="markerClusterOptions" (leafletMarkerClusterReady)="markerClusterReady($event)"
+      (leafletMapReady)="onMapReady($event)">
+    </div>
+  </div>
+</div>
+
+<!--
+<div>
+  <div *ngFor="let language of languageFilters">
+    <label class="container">
+      <input type="checkbox" name="language.name" checked="{{filterItems.languages && -1 !== filterItems.languages.indexOf(language.name) ? 'checked' : ''}}"
+        (change)="handleLanguageEvent($event)">
+      <span class="checkmark">{{language.name}}({{language.value}})</span>
+    </label>
+  </div>
+</div> -->
+
+<div>Number of tweets: {{tweets.length}}</div>
+<div>Number of filtered tweets: {{filteredTweets.length}}</div>

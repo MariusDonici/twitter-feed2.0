@@ -1,6 +1,6 @@
 export class Coordinates {
-    latitude: string | number;
-    longitude: string | number;
+    latitude: number;
+    longitude: number;
     accuracy?: number;
 
     constructor(that?: Coordinates) {

@@ -1,0 +1,16 @@
+#myMap {
+  top:64px;
+  bottom:0;
+  width:80%;
+  margin-left: 10%;
+  position:absolute;
+}
+.loader {
+  left: 50%;
+  margin-left: -4em;
+}
+.map-wrapper{
+  top:64px;
+  bottom:0;
+  width:80%;
+}

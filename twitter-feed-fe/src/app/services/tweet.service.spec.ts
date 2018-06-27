@@ -1,15 +1,15 @@
 import { TestBed, inject } from '@angular/core/testing';
 
-import { TweetServiceService } from './tweet-service.service';
+import { TweetService } from './tweet.service';
 
 describe('TweetServiceService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [TweetServiceService]
+      providers: [TweetService]
     });
   });
 
-  it('should be created', inject([TweetServiceService], (service: TweetServiceService) => {
+  it('should be created', inject([TweetService], (service: TweetService) => {
     expect(service).toBeTruthy();
   }));
 });

@@ -4,6 +4,8 @@ import { Tweet } from '../models/tweet';
 import { Observable } from 'rxjs';
 import 'rxjs/add/operator/map';
 import { Subject } from 'rxjs/Subject';
+
+// tslint:disable-next-line:import-blacklist
 import 'rxjs/Rx';
 
 @Injectable({
@@ -12,6 +14,7 @@ import 'rxjs/Rx';
 export class TweetService {
   tweetUrl = 'http://localhost:9005/retrieve';  // URL to web api
   wsUrl = 'http://localhost:9000/stomp';
+  localJson = 'assets/tweets.json';
 
   constructor(private http: HttpClient) {
   }
@@ -30,26 +33,27 @@ export class TweetService {
 
   /** GET heroes from the server */
   public getTweets(page: number, size: number): Observable<any[]> {
-    let params = new HttpParams({
-      fromObject: {
-        page: page.toString(),
-        size: size.toString()
-      }
-    });
+    // const params = new HttpParams({
+    //   fromObject: {
+    //     page: page.toString(),
+    //     size: size.toString()
+    //   }
+    // });
 
-    return this.http.get<Tweet[]>(this.tweetUrl, { params: params });
+    // return this.http.get<Tweet[]>(this.tweetUrl, { params: params });
+    return this.http.get<Tweet[]>(this.localJson);
   }
 
   public retrieveHeroesPageable(): Observable<any[]> {
-    this.getTweets(this.pageNumber, this.sizeOfPage);
+    return this.getTweets(this.pageNumber, this.sizeOfPage);
 
-    return this.getTweets(this.pageNumber, this.sizeOfPage).concatMap((tweets: Tweet[]) => {
-      if (tweets.length > 0) {
-        this.pageNumber++;
-        return this.retrieveHeroesPageable().map((temp) => tweets.concat(temp));
-      }
+    // return this.getTweets(this.pageNumber, this.sizeOfPage).concatMap((tweets: Tweet[]) => {
+    //   if (tweets.length > 0) {
+    //     this.pageNumber++;
+    //     return this.retrieveHeroesPageable().map((temp) => tweets.concat(temp));
+    //   }
 
-      return Observable.of(tweets);
-    });
+    //   return Observable.of(tweets);
+    // });
   }
 }
