@@ -33,9 +33,6 @@ const config: SocketIoConfig = {
   ],
   imports: [
     BrowserModule,
-    AgmCoreModule.forRoot({
-      apiKey: "AIzaSyDI5URIIZzIiK2pl_-9TeP9cuFn4lIeSH4"
-    }),
     AgmJsMarkerClustererModule,
     HttpClientModule,
     AgmSnazzyInfoWindowModule,
