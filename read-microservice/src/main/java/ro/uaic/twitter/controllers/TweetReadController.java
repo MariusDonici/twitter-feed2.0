@@ -1,17 +1,14 @@
 package ro.uaic.twitter.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
-import ro.uaic.twitter.models.entities.TweetEntity;
+import org.springframework.web.bind.annotation.*;
+import ro.uaic.twitter.models.dtos.TweetDTO;
 import ro.uaic.twitter.services.TweetReadService;
 
-import javax.websocket.server.PathParam;
 import java.util.List;
 
 @RestController
+@RequestMapping("/tweets")
 @CrossOrigin("*")
 public class TweetReadController {
 
@@ -21,10 +18,19 @@ public class TweetReadController {
     public TweetReadController(TweetReadService tweetReadService) {
         this.tweetReadService = tweetReadService;
     }
+//
+//    @GetMapping("/retrieve")
+//    public List<TweetEntity> retrieveTweets(@PathParam("page") Long page, @PathParam("size") Long size) {
+//        return tweetReadService.retrieveAllTweets(page, size);
+//    }
 
-    @GetMapping("/retrieve")
+    @GetMapping
+    public List<TweetDTO> retrieveTweets() {
+        return tweetReadService.retrieveTweetsWithCoordinates();
+    }
 
-    public List<TweetEntity> retrieveTweets(@PathParam("page") Long page, @PathParam("size") Long size) {
-        return tweetReadService.retrieveAllTweets(page, size);
+    @GetMapping("/{tweetId}")
+    public TweetDTO retrieveTweetById(@PathVariable("tweetId") String tweetId){
+        return tweetReadService.retrieveTweetById(tweetId);
     }
 }

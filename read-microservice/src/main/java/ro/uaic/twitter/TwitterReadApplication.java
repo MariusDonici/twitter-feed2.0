@@ -7,7 +7,6 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 
 @SpringBootApplication
 @EnableMongoRepositories
-@ComponentScan({"ro.uaic.twitter"})
 public class TwitterReadApplication {
     public static void main(String[] args) {
         SpringApplication.run(TwitterReadApplication.class, args);

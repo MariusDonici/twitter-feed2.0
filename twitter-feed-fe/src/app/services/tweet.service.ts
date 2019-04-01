@@ -12,7 +12,7 @@ import 'rxjs/Rx';
   providedIn: 'root'
 })
 export class TweetService {
-  tweetUrl = 'http://localhost:9005/retrieve';  // URL to web api
+  tweetUrl = 'http://localhost:9051/tweets';  // URL to web api
   wsUrl = 'http://localhost:9000/stomp';
   localJson = 'assets/tweets.json';
 
@@ -40,8 +40,12 @@ export class TweetService {
     //   }
     // });
 
-    // return this.http.get<Tweet[]>(this.tweetUrl, { params: params });
-    return this.http.get<Tweet[]>(this.localJson);
+    return this.http.get<Tweet[]>(this.tweetUrl);
+    // return this.http.get<Tweet[]>(this.localJson);
+  }
+
+  public getTweetById(id: string): Observable<Tweet> {
+    return this.http.get<Tweet>(this.tweetUrl + "/" + id);
   }
 
   public retrieveHeroesPageable(): Observable<any[]> {
@@ -56,4 +60,7 @@ export class TweetService {
     //   return Observable.of(tweets);
     // });
   }
+
+
+
 }

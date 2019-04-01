@@ -17,14 +17,16 @@ import javax.annotation.PreDestroy;
 public class StreamServiceImpl {
     private TwitterStream appStream;
     private TwitterStream userStream;
+    private TwitterConfiguration twitterConfiguration;
 
     private ApplicationTweetListener applicationTweetListener;
 
     @Autowired
-    public StreamServiceImpl(ApplicationTweetListener applicationTweetListener) {
+    public StreamServiceImpl(TwitterConfiguration twitterConfiguration, ApplicationTweetListener applicationTweetListener) {
+        this.twitterConfiguration = twitterConfiguration;
         this.applicationTweetListener = applicationTweetListener;
 
-        appStream = new TwitterStreamFactory(getConfiguration("app")).getInstance();
+        appStream = new TwitterStreamFactory(getConfiguration()).getInstance();
     }
 
     @PostConstruct
@@ -43,15 +45,14 @@ public class StreamServiceImpl {
     }
 
 
-    private Configuration getConfiguration(String config) {
-        TwitterConfiguration configuration = new TwitterConfiguration(config);
+    private Configuration getConfiguration() {
 
         ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
 
-        configurationBuilder.setOAuthConsumerKey(configuration.getConsumerKey())
-                            .setOAuthConsumerSecret(configuration.getConsumerSecret())
-                            .setOAuthAccessToken(configuration.getAccessKey())
-                            .setOAuthAccessTokenSecret(configuration.getAccessSecret());
+        configurationBuilder.setOAuthConsumerKey(twitterConfiguration.getConsumerKey())
+                            .setOAuthConsumerSecret(twitterConfiguration.getConsumerSecret())
+                            .setOAuthAccessToken(twitterConfiguration.getAccessToken())
+                            .setOAuthAccessTokenSecret(twitterConfiguration.getAccessTokenSecret());
 
         return configurationBuilder.build();
     }

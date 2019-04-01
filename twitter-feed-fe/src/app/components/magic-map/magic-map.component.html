@@ -1,21 +1,43 @@
-<div *ngIf="loading">
-  <img class="loader" src="https://media.giphy.com/media/rDeOjM6DZ1qda/giphy.gif" width="128" height="128">
+<button (click)="toggleMenu()" class="btn">
+  <span>toggle menu</span>
+</button>
+<div *ngIf="isDataLoaded()">
+  <div class="map-wrapper">
+    <ngx-loading [show]="!markersLoaded" [config]="{ backdropBorderRadius: '14px' }"></ngx-loading>
+    <div id="myMap" leaflet [leafletOptions]="options" [leafletMarkerCluster]="markerClusterData"
+         [leafletMarkerClusterOptions]="markerClusterOptions" (leafletMarkerClusterReady)="markerClusterReady($event)"
+         (leafletMapReady)="onMapReady($event)">
+    </div>
+  </div>
 </div>
+
+
+<!--<app-slider-menu [@slideInOut]="menuState"></app-slider-menu>-->
+
+<div class="slide-menu" [@slideInOut]="menuState">
+  <ul>
+    <li>Menu Item</li>
+    <li>Menu Item</li>
+    <li>Menu Item</li>
+    <li>Menu Item</li>
+    <li>Menu Item</li>
+    <li>Menu Item</li>
+  </ul>
+  <button class="close-button" (click)="toggleMenu()">
+    <i class="ion-arrow-left-c"></i>
+  </button>
+
+</div>
+<!--DONE with I guess-->
+<!--<div *ngIf="loading">-->
+<!--<img class="loader" src="https://media.giphy.com/media/rDeOjM6DZ1qda/giphy.gif" width="128" height="128">-->
+<!--</div>-->
 
 <!-- <div *ngIf="!loading">
   <div id="myMap" leaflet [leafletOptions]="options" [leafletMarkerCluster]="markerClusterData" [leafletMarkerClusterOptions]="markerClusterOptions"
     (leafletMarkerClusterReady)="markerClusterReady($event)" (leafletMapReady)="onMapReady($event)">
   </div>
 </div> -->
-<div *ngIf="isDataLoaded()">
-  <div class="map-wrapper">
-    <ngx-loading [show]="!markersLoaded" [config]="{ backdropBorderRadius: '14px' }"></ngx-loading>
-    <div id="myMap" leaflet [leafletOptions]="options" [leafletMarkerCluster]="markerClusterData"
-     [leafletMarkerClusterOptions]="markerClusterOptions" (leafletMarkerClusterReady)="markerClusterReady($event)"
-      (leafletMapReady)="onMapReady($event)">
-    </div>
-  </div>
-</div>
 
 <!--
 <div>
@@ -27,6 +49,3 @@
     </label>
   </div>
 </div> -->
-
-<div>Number of tweets: {{tweets.length}}</div>
-<div>Number of filtered tweets: {{filteredTweets.length}}</div>

@@ -1,12 +1,14 @@
 import { Tweet } from './tweet';
 import { Coordinates } from './coordinates';
-export class CustomMarker {
+import * as L from 'leaflet';
+import { LatLngExpression } from 'leaflet';
+
+export class CustomMarker extends L.Marker {
   coords: Coordinates = new Coordinates();
   tweet: Tweet;
 
-  constructor(lat: number, lng: number, tweet: Tweet) {
-    this.coords.latitude = lat;
-    this.coords.longitude = lng;
+  constructor(tweet: Tweet, latLng: LatLngExpression, options?: L.MarkerOptions) {
+    super(latLng, options);
     this.tweet = tweet;
   }
 }
