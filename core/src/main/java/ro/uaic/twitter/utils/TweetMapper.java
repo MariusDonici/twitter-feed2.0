@@ -1,5 +1,6 @@
 package ro.uaic.twitter.utils;
 
+import ro.uaic.twitter.models.entities.TweetDetailsEntity;
 import ro.uaic.twitter.models.entities.TweetEntity;
 import org.springframework.stereotype.Component;
 import twitter4j.Status;
@@ -10,24 +11,27 @@ import java.util.function.Function;
 public class TweetMapper {
 
     public Function<Status, TweetEntity> statusToTweet = status -> {
-        TweetEntity tweetEntity = new TweetEntity();
+        TweetEntity tweet = new TweetEntity();
+        TweetDetailsEntity tweetDetails = new TweetDetailsEntity();
+        tweet.setCreatedAt(status.getCreatedAt());
 
-        tweetEntity.setCreatedAt(status.getCreatedAt());
+        tweet.setGeoLocation(status.getGeoLocation());
+        tweet.setId(Long.toString(status.getId()));
+        tweet.setLanguage(status.getLang());
+        tweet.setIsRetweet(status.isRetweet());
+        tweet.setSource(status.getSource().replaceAll("<.*?>",""));
 
-        tweetEntity.setGeoLocation(status.getGeoLocation());
-        tweetEntity.setId(Long.toString(status.getId()));
-        tweetEntity.setLanguage(status.getLang());
-        tweetEntity.setUser(status.getUser());
-        tweetEntity.setListOfCountrieWitheld(status.getWithheldInCountries());
-        tweetEntity.setPlace(status.getPlace());
-        tweetEntity.setQuotedTweetId(status.getQuotedStatusId());
-        tweetEntity.setIsRetweet(status.isRetweet());
-        tweetEntity.setRetweetsCount(status.getRetweetCount());
-        tweetEntity.setFavoriteCount(status.getFavoriteCount());
-        tweetEntity.setSource(status.getSource());
-        tweetEntity.setTweetText(status.getText());
+        tweetDetails.setUser(status.getUser());
+        tweetDetails.setListOfCountrieWitheld(status.getWithheldInCountries());
+        tweetDetails.setPlace(status.getPlace());
+        tweetDetails.setQuotedTweetId(status.getQuotedStatusId());
+        tweetDetails.setRetweetsCount(status.getRetweetCount());
+        tweetDetails.setFavoriteCount(status.getFavoriteCount());
+        tweetDetails.setTweetText(status.getText());
 
-        return tweetEntity;
+        tweet.setTweetDetails(tweetDetails);
+
+        return tweet;
     };
 
 }

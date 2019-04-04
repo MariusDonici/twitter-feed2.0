@@ -1,18 +1,15 @@
-package ro.uaic.twitter.models.dtos;
+package ro.uaic.twitter.models.entities;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 import twitter4j.Place;
 import twitter4j.User;
 
 @Getter
 @Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class TweetDetails {
-
-    private User user;
+public class TweetDetailsEntity {
     private Place place;
+    private User user;
     private long quotedTweetId;
     private Integer retweetsCount;
     private Integer favoriteCount;

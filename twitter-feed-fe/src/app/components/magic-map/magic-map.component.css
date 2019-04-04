@@ -1,5 +1,5 @@
 @import url("https://fonts.googleapis.com/css?family=Muli:400,800");
-
+@import url("http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css");
 #myMap {
   top: 1px;
   bottom: 0;
@@ -76,4 +76,16 @@
   cursor: pointer;
   overflow: hidden;
   outline: none;
+}
+
+.number-of-tweets{
+  z-index: 9999;
+  position:absolute;
+  color:#fff;
+  bottom: -10px;
+  left: 0px;
+  font-size: 15px;
+  cursor: default;
+  background: #1a2580;
+  opacity: 0.5;
 }

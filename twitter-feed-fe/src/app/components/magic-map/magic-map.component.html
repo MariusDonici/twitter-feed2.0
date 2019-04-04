@@ -4,8 +4,9 @@
 <div *ngIf="isDataLoaded()">
   <div class="map-wrapper">
     <ngx-loading [show]="!markersLoaded" [config]="{ backdropBorderRadius: '14px' }"></ngx-loading>
-    <div id="myMap" leaflet [leafletOptions]="options" [leafletMarkerCluster]="markerClusterData"
-         [leafletMarkerClusterOptions]="markerClusterOptions" (leafletMarkerClusterReady)="markerClusterReady($event)"
+    <div id="myMap"
+         leaflet
+         [leafletOptions]="options"
          (leafletMapReady)="onMapReady($event)">
     </div>
   </div>
@@ -16,8 +17,11 @@
 
 <div class="slide-menu" [@slideInOut]="menuState">
   <ul>
-    <li>Menu Item</li>
-    <li>Menu Item</li>
+    <li>Language filters</li>
+    <li><a href="#" (click)="hideSomething()">Menu Item</a></li>
+    <br/>
+    <br/>
+    <li>Source filters</li>
     <li>Menu Item</li>
     <li>Menu Item</li>
     <li>Menu Item</li>
@@ -28,6 +32,12 @@
   </button>
 
 </div>
+
+
+<div class="number-of-tweets">
+  <h3>Loaded tweets : {{tweetCount}}</h3>
+</div>
+
 <!--DONE with I guess-->
 <!--<div *ngIf="loading">-->
 <!--<img class="loader" src="https://media.giphy.com/media/rDeOjM6DZ1qda/giphy.gif" width="128" height="128">-->

@@ -1,12 +1,15 @@
 import * as L from "leaflet";
 import { TweetDetails } from "./tweet-details";
+
 export class Tweet {
   id: String;
   latitude: number;
   longitude: number;
+  createdAt: String;
   details: TweetDetails;
-  marker: L.Marker;
-
+  isRetweet: Boolean;
+  language: string;
+  source: String;
 
   getLatLng(): L.LatLng {
     return L.latLng(this.latitude, this.longitude);

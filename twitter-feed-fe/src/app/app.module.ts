@@ -15,6 +15,7 @@ import { LeafletMarkerClusterModule } from "@asymmetrik/ngx-leaflet-markercluste
 import { LoadingModule } from "ngx-loading";
 import { KeysPipe } from "./pipes/keys-pipe";
 import { SliderMenuComponent } from "./components/slider-menu/slider-menu.component";
+import { DataAggregationUtils } from "./utils/data-aggregation-utils";
 
 const config: SocketIoConfig = {
   url: "http://localhost:9000/stomp",
@@ -40,7 +41,7 @@ const config: SocketIoConfig = {
     LeafletMarkerClusterModule,
     LoadingModule
   ],
-  providers: [ClusterManager, MapUtils, KeysPipe],
+  providers: [ClusterManager, MapUtils, KeysPipe, DataAggregationUtils],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

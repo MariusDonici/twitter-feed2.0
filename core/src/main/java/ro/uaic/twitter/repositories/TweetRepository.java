@@ -14,7 +14,7 @@ public interface TweetRepository extends MongoRepository<TweetEntity, String> {
 
     Page<TweetEntity> findAll(Pageable pageable);
 
-    @Query(value = "{}", fields = "{geoLocation: 1}")
+    @Query(value = "{}", fields = "{tweetDetails:0}")
     List<TweetEntity> findAllTweetOnlyCoordinates();
 }
 

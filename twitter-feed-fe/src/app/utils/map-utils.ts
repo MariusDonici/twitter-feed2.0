@@ -42,8 +42,9 @@ export class MapUtils {
     });
   }
 
-  getMapOptions(position: L.LatLng) {
+  getMapOptions(position: L.LatLng): L.MapOptions {
     return {
+      minZoom: 5,
       layers: [this.googleMaps],
       zoom: 7,
       center: position

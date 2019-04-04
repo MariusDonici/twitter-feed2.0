@@ -18,15 +18,10 @@ public class TweetEntity {
     @Id
     private String id;
     private Date createdAt;
-    private User user;
     private GeoLocation geoLocation;
     private String language;
-    private Place place;
-    private long quotedTweetId;
-    private Integer retweetsCount;
-    private Integer favoriteCount;
     private String source;
-    private String tweetText;
-    private String[] listOfCountrieWitheld;
     private Boolean isRetweet;
+
+    private TweetDetailsEntity tweetDetails;
 }

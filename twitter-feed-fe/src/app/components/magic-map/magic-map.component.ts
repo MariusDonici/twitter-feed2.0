@@ -1,19 +1,22 @@
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, ViewEncapsulation } from "@angular/core";
 import * as L from "leaflet";
-import { MarkerClusterGroupOptions } from "leaflet";
 import "leaflet.markercluster";
 import { MapUtils } from "../../utils/map-utils";
 import { LocationService } from "../../services/location.service";
 import { MapService } from "../../services/map.service";
 import { TweetService } from "../../services/tweet.service";
 import { Tweet } from "../../models/tweet";
-import * as _ from "lodash";
-import { Dictionary } from "lodash";
-import { Data } from "../../models/data";
 import { FilterService } from "../../services/filter.service";
-import { FilterItem } from "../../models/filter-item";
 import { CustomMarker } from "../../models/marker";
 import { animate, state, style, transition, trigger } from "@angular/animations";
+import { subGroup } from 'assets/leaflet.featuregroup.subgroup.js';
+// import '../../../../bower_components/leaflet-slider/dist/leaflet.SliderControl.min.js';
+import 'assets/sliderControl.js';
+import '../../../../node_modules/leaflet.markercluster.layersupport/dist/leaflet.markercluster.layersupport.js'
+import { DataAggregationUtils } from "../../utils/data-aggregation-utils";
+import { GroupService } from "../../services/group.service";
+import { CustomLayerGroup } from "../../models/CustomLayerGroup";
+
 
 @Component({
   selector: "app-magic-map",
@@ -37,21 +40,24 @@ import { animate, state, style, transition, trigger } from "@angular/animations"
 export class MagicMapComponent implements OnInit, AfterViewInit {
   map: L.Map;
   loading = true;
-  options: any;
-  markers: L.Marker[] = [];
+  options: L.MapOptions;
+  markers: CustomMarker[] = [];
+  parentMarkersGroup: L.MarkerClusterGroup = new L.MarkerClusterGroup([], null);
 
-  filteredTweets: Tweet[] = [];
-  languageFilters: Data[] = [];
-  filterItems: FilterItem = new FilterItem();
+  allGroupLayers: CustomLayerGroup[] = [];
+  filteredMarkers: CustomMarker[] = [];
+
+  layerControl = L.control.layers(this.mapService.baseMaps, null);
 
   tweets: Tweet[] = [];
+  tweetCount: number = 0;
 
   markersLoaded = false;
 
   // Marker cluster stuff
   markerClusterGroup: L.MarkerClusterGroup;
   markerClusterData: any[] = [];
-  markerClusterOptions: MarkerClusterGroupOptions = {
+  markerClusterOptions: L.MarkerClusterGroupOptions = {
     chunkedLoading: true,
     chunkDelay: 150,
     chunkProgress: this.updateProgressBar.bind(this),
@@ -69,7 +75,9 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
     private locationService: LocationService,
     private tweetService: TweetService,
     private filterService: FilterService,
-    private cdRef: ChangeDetectorRef
+    private cdRef: ChangeDetectorRef,
+    private dataAggregationUtils: DataAggregationUtils,
+    private groupService: GroupService
   ) {
   }
 
@@ -77,14 +85,6 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
 
   toggleMenu() {
     this.menuState = this.menuState === 'out' ? 'in' : 'out';
-  }
-
-  ngAfterViewChecked() {
-    let show = this.markersLoaded;
-    if (show != this.markersLoaded) { // check if it change, tell CD update view
-      this.markersLoaded = show;
-      this.cdRef.detectChanges();
-    }
   }
 
   ngOnInit() {
@@ -96,52 +96,92 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
 
   onMapReady(map: L.Map) {
     this.map = map;
-    L.control.layers(this.mapService.baseMaps).addTo(this.map);
-
-    this.refreshLanguages();
-
-    this.map.on("moveend", this.filterTweets.bind(this));
+    this.map.on('overlayremove', (e) => this.handleLayerChange(e, 'overlayremove'));
+    this.map.on('overlayadd', (e) => this.handleLayerChange(e, 'overlayadd'));
   }
 
-  filterTweets() {
-    // this.filterItems.bounds = this.map.getBounds();
+  private handleLayerChange(e: any, operation: string): void {
+    if (operation === 'overlayremove') {
+      e.layer.selected = false;
+      let tweetIds = this.filteredMarkers.map(m => m.tweet.id);
+      e.layer.getLayers().forEach(marker => {
+        if (tweetIds.indexOf(marker.tweet.id) === -1) {
+          this.filteredMarkers.push(marker);
+        }
+      })
 
-    // this.filteredTweets = this.filterService.filterTweet(
-    //   this.tweets,
-    //   this.filterItems
-    // );
-
-    // console.log(this.filteredTweets.length);
-    // this.markers = this.getMarkersFromTweets(this.filteredTweets);
-    // this.refreshLanguages();
-    // this.updateCluster();
-  }
-
-  handleLanguageEvent(event) {
-    console.log("handle language " + event.source.name);
-    if (this.filterItems.languages.includes(event.source.name)) {
-      const index = this.filterItems.languages.indexOf(event.source.name, 0);
-
-      this.filterItems.languages.splice(index, 1);
     } else {
-      this.filterItems.languages.push(event.source.name);
+      e.layer.selected = true;
     }
-
-    this.filterTweets();
-  }
-
-  ngAfterViewInit() {
   }
 
   private getTweets() {
     this.tweetService.retrieveHeroesPageable().subscribe(tweets => {
       this.markers = this.getMarkersFromTweets(tweets).filter(marker => marker !== undefined);
       this.loading = false;
-      this.markerClusterData = this.markers;
+      this.tweetCount = this.markers.length;
+      // this.markerClusterData = this.markers;
+      // this.addLayerWithSubgroupMethod();
+      this.addLayersWithSupportLayerMethod();
     });
+
   }
 
-  private getMarkersFromTweets(tweets: any[]): L.Marker[] {
+  private addLayersWithSupportLayerMethod() {
+    let languages = this.dataAggregationUtils.retrieveLanguages(this.markers);
+    let customGroupForLanguages = this.groupService.retrieveLanguageGroups(languages, 4);
+
+    let sources = this.dataAggregationUtils.retrieveSources(this.markers);
+    let customGroupsForSources = this.groupService.retrieveSourceGroups(sources, 4);
+
+
+    this.markers.forEach(marker => {
+      marker.addTo(customGroupForLanguages.get(marker.tweet.language) !== undefined ? customGroupForLanguages.get(marker.tweet.language) : customGroupForLanguages.get('other'));
+      marker.addTo(customGroupsForSources.get(marker.tweet.source.toString()) !== undefined ? customGroupsForSources.get(marker.tweet.source.toString()) : customGroupsForSources.get('other'));
+    });
+
+    //Layer support
+
+
+    let layerSupportGroup = L.markerClusterGroup.layerSupport({ maxClusterRadius: 75 });
+
+
+    //Add all the layer group the the support group,map and layerControl
+    layerSupportGroup.addTo(this.map);
+
+    Array.from(customGroupForLanguages.entries()).forEach((group) => {
+      this.allGroupLayers.push(group[1]);
+      layerSupportGroup.checkIn(group[1]);
+      group[1].addTo(this.map);
+      this.layerControl.addOverlay(group[1], this.getFlagForLanguage(group[0]).toString())
+    });
+
+    Array.from(customGroupsForSources.entries()).forEach((group) => {
+      this.allGroupLayers.push(group[1]);
+      layerSupportGroup.checkIn(group[1]);
+      group[1].addTo(this.map);
+      this.layerControl.addOverlay(group[1], this.getSourceImageForSourceString(group[0]).toString())
+    });
+
+    this.layerControl.addTo(this.map);
+
+    var sliderControl = L.control.sliderControl({
+      position: "topright",
+      layer: layerSupportGroup,
+      range: true,
+      showAllOnStart: true
+    });
+
+    this.map.addControl(sliderControl);
+    this.cdRef.markForCheck();
+    sliderControl.startSlider();
+
+
+    this.markersLoaded = true;
+    this.cdRef.markForCheck();
+  }
+
+  private getMarkersFromTweets(tweets: any[]): CustomMarker[] {
     return tweets.map(tweet => {
       if (tweet.latitude && tweet.longitude) {
         this.tweets.push(tweet);
@@ -170,9 +210,6 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
     return this.options;
   }
 
-  markerClusterReady(group: L.MarkerClusterGroup) {
-    this.markerClusterGroup = group;
-  }
 
   updateProgressBar(processed, total, elapsed, layersArray) {
     if (elapsed > 1000) {
@@ -185,38 +222,17 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
     }
   }
 
-  updateCluster() {
-    // console.log("updating cluster");
-    // this.markerClusterGroup.clearLayers();
-    // this.markerClusterData = [];
-    // this.markerClusterGroup.addLayers(this.markers);
-  }
 
-  getLanguages(): Dictionary<number> {
-    const languageDictionary = _.countBy(this.filteredTweets, function (e) {
-      return e.details.language;
-    });
-
-    console.log(languageDictionary);
-    return languageDictionary;
-  }
-
-  refreshLanguages() {
-    // const newLocal = this.filteredTweets.reduce((acc, curr) => {
-    //   acc[curr.language] = acc[curr.language] ? acc[curr.language] + 1 : 1;
-    //   return acc;
-    // }, {});
-
-    // this.languageFilters = Object.keys(newLocal).map(
-    //   key => new Data(key, newLocal[key])
-    // );
-  }
-
+  // ##############################################
+  // Popup view
+  //
+  //
+  //
   public getTweetCardHTML(tweet: Tweet): String {
 
 
     let user = tweet.details.user;
-    let htmlContent = "<figure class=\"snip1559\">\n" +
+    let htmlContent = "<figure class=\"tweet-card\">\n" +
       "    <div class=\"profile-wrapper\">\n" +
       "      <div class=\"followers-wrapper\">\n" +
       "        <div class=\"followers\">\n" +
@@ -243,10 +259,10 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
       "      <h3>" + user.name + "</h3>\n" +
       "      <h5>" + user.screenName + "</h5>\n" +
       "      <div class=\"icons\">"
-      + this.getFlagForLanguage(tweet.details.language) + this.getSourceImageForSourceString(tweet.details.source) +
+      + this.getFlagForLanguage(tweet.language) + this.getSourceImageForSourceString(tweet.source) +
       "      </div>\n" +
       "      <p>" + tweet.details.tweetText + "</p>\n" +
-      "      <div>" + tweet.details.createdAt + "</div>" +
+      "      <div>" + tweet.createdAt + "</div>" +
       "    </figcaption>\n" +
       "  </figure>"
     return htmlContent;
@@ -274,7 +290,6 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
       case "cs":
         countryForLanguage = 'cz';
         break;
-
       case "und":
         countryForLanguage = 'us';
         break;
@@ -286,13 +301,9 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
   }
 
   public getSourceImageForSourceString(sourceString: String): String {
-    let tempDiv = document.createElement('div');
-    tempDiv.innerHTML = sourceString.toString();
-
-    let source = tempDiv.textContent || tempDiv.innerText || "";
     let sourceIconClass;
 
-    switch (source.toLowerCase()) {
+    switch (sourceString.toLowerCase()) {
       case "instagram":
         sourceIconClass = 'ion-social-instagram';
         break;
@@ -318,5 +329,64 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
 
 
     return "<span><i class=\"" + sourceIconClass + "\" style='font-size:29px'></i></span>\n"
+  }
+
+  ngAfterViewInit(): void {
+  }
+
+
+//  OUTDADED implementations
+
+  private addLayerWithSubgroupMethod() {
+    let subGroupOne = subGroup(this.parentMarkersGroup);
+    let subGroupTwo = subGroup(this.parentMarkersGroup);
+
+
+    let i = 0;
+    this.markers.forEach(marker => {
+      i += 1;
+      marker.addTo(i % 2 ? subGroupOne : subGroupTwo)
+    });
+
+
+    this.parentMarkersGroup.addTo(this.map);
+
+    this.layerControl.addOverlay(subGroupOne, "Group one");
+    this.layerControl.addOverlay(subGroupTwo, "Group two");
+    this.layerControl.addTo(this.map);
+
+
+    subGroupOne.addTo(this.map);
+    subGroupTwo.addTo(this.map);
+
+    this.markersLoaded = true;
+  }
+
+  markerClusterReady(group: L.MarkerClusterGroup) {
+    this.markerClusterGroup = group;
+  }
+
+
+  updateCluster() {
+    // console.log("updating cluster");
+    // this.markerClusterGroup.clearLayers();
+    // this.markerClusterData = [];
+    // this.markerClusterGroup.addLayers(this.markers);
+  }
+
+
+  //TODO: Do something like active filter list and remove/add markers in the layer based on that
+  hideSomething() {
+    let toRemoveLayer = this.allGroupLayers.find((layer) => layer.name == 'en');
+
+    if (toRemoveLayer.isSelected()) {
+      let layers = toRemoveLayer.getLayers();
+
+      toRemoveLayer.clearLayers();
+
+      layers.forEach(layer => layer.tweet.source)
+    } else {
+      this.map.addLayer(toRemoveLayer)
+    }
   }
 }

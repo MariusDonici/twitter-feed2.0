@@ -60,19 +60,19 @@ public class TweetReadServiceImpl implements TweetReadService {
                                     .id(tweet.getId())
                                     .latitude(tweet.getGeoLocation().getLatitude())
                                     .longitude(tweet.getGeoLocation().getLongitude())
+                                    .createdAt(tweet.getCreatedAt())
+                                    .source(tweet.getSource())
+                                    .language(tweet.getLanguage())
+                                    .isRetweet(tweet.getIsRetweet())
                                     .build();
 
         if (includeDetails) {
             TweetDetails tweetDetails = TweetDetails.builder()
-                                                    .source(tweet.getSource())
-                                                    .createdAt(tweet.getCreatedAt())
-                                                    .favoriteCount(tweet.getFavoriteCount())
-                                                    .retweetsCount(tweet.getRetweetsCount())
-                                                    .user(tweet.getUser())
-                                                    .place(tweet.getPlace())
-                                                    .isRetweet(tweet.getIsRetweet())
-                                                    .language(tweet.getLanguage())
-                                                    .tweetText(tweet.getTweetText())
+                                                    .favoriteCount(tweet.getTweetDetails().getFavoriteCount())
+                                                    .retweetsCount(tweet.getTweetDetails().getRetweetsCount())
+                                                    .user(tweet.getTweetDetails().getUser())
+                                                    .place(tweet.getTweetDetails().getPlace())
+                                                    .tweetText(tweet.getTweetDetails().getTweetText())
                                                     .build();
             tweetDTO.setDetails(tweetDetails);
         }
