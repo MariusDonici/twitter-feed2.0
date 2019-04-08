@@ -1,28 +1,29 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, ViewEncapsulation } from "@angular/core";
+import {AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, ViewEncapsulation} from "@angular/core";
 import * as L from "leaflet";
 import "leaflet.markercluster";
-import { MapUtils } from "../../utils/map-utils";
-import { LocationService } from "../../services/location.service";
-import { MapService } from "../../services/map.service";
-import { TweetService } from "../../services/tweet.service";
-import { Tweet } from "../../models/tweet";
-import { FilterService } from "../../services/filter.service";
-import { CustomMarker } from "../../models/marker";
-import { animate, state, style, transition, trigger } from "@angular/animations";
-import { subGroup } from 'assets/leaflet.featuregroup.subgroup.js';
-// import '../../../../bower_components/leaflet-slider/dist/leaflet.SliderControl.min.js';
+import {MapUtils} from "../../utils/map-utils";
+import {LocationService} from "../../services/location.service";
+import {MapService} from "../../services/map.service";
+import {TweetService} from "../../services/tweet.service";
+import {Tweet} from "../../models/tweet";
+import {FilterService} from "../../services/filter.service";
+import {CustomMarker} from "../../models/marker";
+import {animate, state, style, transition, trigger} from "@angular/animations";
+import {subGroup} from 'assets/leaflet.featuregroup.subgroup.js';
 import 'assets/sliderControl.js';
 import '../../../../node_modules/leaflet.markercluster.layersupport/dist/leaflet.markercluster.layersupport.js'
-import { DataAggregationUtils } from "../../utils/data-aggregation-utils";
-import { GroupService } from "../../services/group.service";
-import { CustomLayerGroup } from "../../models/CustomLayerGroup";
+import {DataAggregationUtils} from "../../utils/data-aggregation-utils";
+import {GroupService} from "../../services/group.service";
+import {CustomLayerGroup} from "../../models/CustomLayerGroup";
+import {FilterDTO} from "../../models/filder-dto";
+import {RandomUtils} from "../../utils/random-utils";
 
 
 @Component({
   selector: "app-magic-map",
   templateUrl: "./magic-map.component.html",
 
-  styleUrls: ["./magic-map.component.css", "./tweet-card.css"],
+  styleUrls: ["./magic-map.component.css", "./tweet-card.css", "./dropdown-style.css"],
   encapsulation: ViewEncapsulation.None,
   animations: [
     trigger('slideInOut', [
@@ -45,6 +46,16 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
   parentMarkersGroup: L.MarkerClusterGroup = new L.MarkerClusterGroup([], null);
 
   allGroupLayers: CustomLayerGroup[] = [];
+  languagesFromGroups: FilterDTO[] = [];
+  sourcesFromGroups: FilterDTO[] = [];
+
+  selectedLanguages: FilterDTO[] = [];
+  selectedSources: FilterDTO[] = [];
+
+  languagesSettings = this.getDropdownSettings([]);
+  sourcesSettings = this.getDropdownSettings([]);
+
+
   filteredMarkers: CustomMarker[] = [];
 
   layerControl = L.control.layers(this.mapService.baseMaps, null);
@@ -77,7 +88,8 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
     private filterService: FilterService,
     private cdRef: ChangeDetectorRef,
     private dataAggregationUtils: DataAggregationUtils,
-    private groupService: GroupService
+    private groupService: GroupService,
+    public randomUtils: RandomUtils
   ) {
   }
 
@@ -128,11 +140,11 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
   }
 
   private addLayersWithSupportLayerMethod() {
-    let languages = this.dataAggregationUtils.retrieveLanguages(this.markers);
-    let customGroupForLanguages = this.groupService.retrieveLanguageGroups(languages, 4);
+    let languages = this.dataAggregationUtils.retrieveTweetFieldMap(this.markers.map(m => m.tweet.language));
+    let customGroupForLanguages = this.groupService.retrieveGroupsForFilter(languages, "LANGUAGE", 30);
 
-    let sources = this.dataAggregationUtils.retrieveSources(this.markers);
-    let customGroupsForSources = this.groupService.retrieveSourceGroups(sources, 4);
+    let sources = this.dataAggregationUtils.retrieveTweetFieldMap(this.markers.map(m => m.tweet.source));
+    let customGroupsForSources = this.groupService.retrieveGroupsForFilter(sources, "SOURCE", 30);
 
 
     this.markers.forEach(marker => {
@@ -143,7 +155,7 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
     //Layer support
 
 
-    let layerSupportGroup = L.markerClusterGroup.layerSupport({ maxClusterRadius: 75 });
+    let layerSupportGroup = L.markerClusterGroup.layerSupport({maxClusterRadius: 75});
 
 
     //Add all the layer group the the support group,map and layerControl
@@ -153,28 +165,30 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
       this.allGroupLayers.push(group[1]);
       layerSupportGroup.checkIn(group[1]);
       group[1].addTo(this.map);
-      this.layerControl.addOverlay(group[1], this.getFlagForLanguage(group[0]).toString())
+      // this.layerControl.addOverlay(group[1], this.getFlagLinkForLanguage(group[0]).toString())
+      this.languagesFromGroups.push(new FilterDTO(group[0], group[1].getLayers().length, group[1].type))
     });
 
     Array.from(customGroupsForSources.entries()).forEach((group) => {
       this.allGroupLayers.push(group[1]);
       layerSupportGroup.checkIn(group[1]);
       group[1].addTo(this.map);
-      this.layerControl.addOverlay(group[1], this.getSourceImageForSourceString(group[0]).toString())
+      // this.layerControl.addOverlay(group[1], this.getIconClassForSource(group[0]).toString())
+      this.sourcesFromGroups.push(new FilterDTO(group[0], group[1].getLayers().length, group[1].type))
     });
 
     this.layerControl.addTo(this.map);
 
-    var sliderControl = L.control.sliderControl({
-      position: "topright",
-      layer: layerSupportGroup,
-      range: true,
-      showAllOnStart: true
-    });
-
-    this.map.addControl(sliderControl);
-    this.cdRef.markForCheck();
-    sliderControl.startSlider();
+    // var sliderControl = L.control.sliderControl({
+    //   position: "topright",
+    //   layer: layerSupportGroup,
+    //   range: true,
+    //   showAllOnStart: true
+    // });
+    //
+    // this.map.addControl(sliderControl);
+    // this.cdRef.markForCheck();
+    // sliderControl.startSlider();
 
 
     this.markersLoaded = true;
@@ -188,7 +202,7 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
         // this.filteredTweets.push(tweet);
         const marker = new CustomMarker(tweet,
           [tweet.latitude, tweet.longitude],
-          { icon: this.mapUtils.getIcon() }
+          {icon: this.mapUtils.getIcon()}
         );
 
         marker.on('click', function (e) {
@@ -204,7 +218,6 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
       }
     });
   }
-
 
   isDataLoaded() {
     return this.options;
@@ -258,8 +271,9 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
       "    <figcaption>\n" +
       "      <h3>" + user.name + "</h3>\n" +
       "      <h5>" + user.screenName + "</h5>\n" +
-      "      <div class=\"icons\">"
-      + this.getFlagForLanguage(tweet.language) + this.getSourceImageForSourceString(tweet.source) +
+      "      <div class=\"icons\">" +
+      "           <img src='" + this.randomUtils.getFlagLinkForLanguage(tweet.language) + "' style='margin-bottom:-5px;'/>" +
+      "           <span><i class=\"" + this.randomUtils.getIconClassForSource(tweet.source) + "\" style='font-size:29px'></i></span>\n " +
       "      </div>\n" +
       "      <p>" + tweet.details.tweetText + "</p>\n" +
       "      <div>" + tweet.createdAt + "</div>" +
@@ -268,72 +282,8 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
     return htmlContent;
   }
 
-  public getFlagForLanguage(userPrefferedLanguage: String): String {
-    let countryForLanguage: String = 'us';
-
-    switch (userPrefferedLanguage.toLowerCase()) {
-      case "en":
-        countryForLanguage = 'us';
-        break;
-      case "en-gb":
-        countryForLanguage = 'gb';
-        break;
-      case "ja":
-        countryForLanguage = 'jp';
-        break;
-      case "zh-tw":
-        countryForLanguage = 'tw';
-        break;
-      case "ko":
-        countryForLanguage = 'kr';
-        break;
-      case "cs":
-        countryForLanguage = 'cz';
-        break;
-      case "und":
-        countryForLanguage = 'us';
-        break;
-      default:
-        countryForLanguage = userPrefferedLanguage;
-    }
-
-    return "<img src=\"https://www.countryflags.io/" + countryForLanguage + "/shiny/32.png\" style='margin-bottom:-5px;'>";
-  }
-
-  public getSourceImageForSourceString(sourceString: String): String {
-    let sourceIconClass;
-
-    switch (sourceString.toLowerCase()) {
-      case "instagram":
-        sourceIconClass = 'ion-social-instagram';
-        break;
-      case "foursquare":
-        sourceIconClass = 'ion-social-foursquare';
-        break;
-      case"foursquare swarm":
-        sourceIconClass = 'ion-social-foursquare';
-        break;
-      case "twitter for android":
-        sourceIconClass = 'ion-social-android-outline';
-        break;
-      case "twitter for iphone":
-        sourceIconClass = 'ion-social-apple-outline';
-        break;
-
-      case "twitter for ios":
-        sourceIconClass = 'ion-social-apple-outline';
-        break;
-      default:
-        sourceIconClass = 'ion-android-globe'
-    }
-
-
-    return "<span><i class=\"" + sourceIconClass + "\" style='font-size:29px'></i></span>\n"
-  }
-
   ngAfterViewInit(): void {
   }
-
 
 //  OUTDADED implementations
 
@@ -377,16 +327,78 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
 
   //TODO: Do something like active filter list and remove/add markers in the layer based on that
   hideSomething() {
-    let toRemoveLayer = this.allGroupLayers.find((layer) => layer.name == 'en');
 
-    if (toRemoveLayer.isSelected()) {
-      let layers = toRemoveLayer.getLayers();
-
-      toRemoveLayer.clearLayers();
-
-      layers.forEach(layer => layer.tweet.source)
-    } else {
-      this.map.addLayer(toRemoveLayer)
-    }
   }
+
+//  Please move me FILTERING stuff
+
+  //TODO: Please find a better way to disable this.
+  onItemSelect(item: FilterDTO) {
+
+    //Handle case where no filters are selected.
+    this.allGroupLayers.forEach(group => {
+      this.map.removeLayer(group);
+    });
+
+    this.allGroupLayers.forEach(group => {
+      if (item.filterType == 'LANGUAGE') {
+        if (this.selectedLanguages.map(l => l.filterValue).indexOf(group.name) >= 0) {
+          this.map.addLayer(group);
+        }
+      }
+
+      if (item.filterType == 'SOURCE') {
+        if (this.selectedSources.map(l => l.filterValue).indexOf(group.name) >= 0) {
+          this.map.addLayer(group);
+        }
+      }
+    });
+
+    this.sourcesSettings = this.getDropdownSettings([this.selectedLanguages]);
+    this.languagesSettings = this.getDropdownSettings([this.selectedSources]);
+  }
+
+  OnItemDeSelect(item: FilterDTO) {
+
+    this.allGroupLayers.filter(group => group.getGroupName() === item.filterValue).forEach(group => {
+      this.map.removeLayer(group);
+    });
+
+
+    //Case of which no filter is selected.
+    if (this.selectedSources.length === 0 && this.selectedLanguages.length === 0) {
+      this.allGroupLayers.forEach(group => {
+        this.map.addLayer(group);
+      });
+    }
+
+    this.sourcesSettings = this.getDropdownSettings([this.selectedLanguages]);
+    this.languagesSettings = this.getDropdownSettings([this.selectedSources]);
+  }
+
+  onSelectAll(items: FilterDTO[]) {
+    this.sourcesSettings = this.getDropdownSettings([this.selectedLanguages]);
+    this.languagesSettings = this.getDropdownSettings([this.selectedSources]);
+  }
+
+  onDeSelectAll(items: FilterDTO[]) {
+    this.sourcesSettings = this.getDropdownSettings([this.selectedLanguages]);
+    this.languagesSettings = this.getDropdownSettings([this.selectedSources]);
+  }
+
+  //Refactor
+  getDropdownSettings(lists: any[]) {
+    return {
+      singleSelection: false,
+      primaryKey: 'filterValue',
+      labelKey: 'filterValue',
+      selectAllText: 'Select All',
+      unSelectAllText: 'UnSelect All',
+      badgeShowLimit: 3,
+      maxHeight: 200,
+      enableSearchFilter: true,
+      disabled: lists.filter(l => l.length > 0).length > 0
+    };
+  }
+
 }

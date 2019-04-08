@@ -1,47 +1,30 @@
-import { CustomMarker } from "../models/marker";
-import { countBy } from "lodash";
-import { Injectable } from "@angular/core";
+import {Injectable} from "@angular/core";
 
 @Injectable()
 export class DataAggregationUtils {
 
-  //TODO:Find better handling..
-  //Return an array of tuples
-  retrieveLanguages(markers: CustomMarker[]): any {
+  /*
+    @fieldListValues - a list of values from the tweet. Ex. source/language/isRetweet etc.
 
-    const languageDictionary = countBy(markers, function (e) {
-      return e.tweet.language;
-    });
+    Return a sorted list of 'tuples'. EG. A[0] = 'EN' A[1] = 1000 where first element is the field value and second is the count number
+   */
 
-    let languageMap = new Map();
+  //TODO: Find how to make pairs or tuples in typescript
+  retrieveTweetFieldMap(fieldListValues: any[]) {
 
-    markers.map(e => e.tweet.language).forEach(language => {
-      if (languageMap.get(language) === undefined) {
-        languageMap.set(language, 1);
+    let fieldMap = new Map();
+
+    fieldListValues.forEach(fieldValue => {
+      if (fieldMap.get(fieldValue) === undefined) {
+        fieldMap.set(fieldValue, 1);
       } else {
-        languageMap.set(language, languageMap.get(language) + 1);
+        fieldMap.set(fieldValue, fieldMap.get(fieldValue) + 1);
       }
     });
 
-    return Array.from(languageMap.entries()).sort((a, b) => b[1] - a[1]).map((key, value) => [key, value]);
+
+    return Array.from(fieldMap.entries()).sort((a, b) => b[1] - a[1]).map((key, value) => [key, value]);
   }
 
-  retrieveSources(markers: CustomMarker[]): any {
 
-    const languageDictionary = countBy(markers, function (e) {
-      return e.tweet.source;
-    });
-
-    let languageMap = new Map();
-
-    markers.map(e => e.tweet.source).forEach(language => {
-      if (languageMap.get(language) === undefined) {
-        languageMap.set(language, 1);
-      } else {
-        languageMap.set(language, languageMap.get(language) + 1);
-      }
-    });
-
-    return Array.from(languageMap.entries()).sort((a, b) => b[1] - a[1]).map((key, value) => [key, value]);
-  }
 }

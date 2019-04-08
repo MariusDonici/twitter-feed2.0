@@ -6,7 +6,7 @@ export class MapUtils {
   googleMaps = L.tileLayer(
     "http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
     {
-      maxZoom: 20,
+      maxZoom: 40,
       subdomains: ["mt0", "mt1", "mt2", "mt3"],
       detectRetina: true,
       zIndex: 1
@@ -44,7 +44,7 @@ export class MapUtils {
 
   getMapOptions(position: L.LatLng): L.MapOptions {
     return {
-      minZoom: 5,
+      minZoom: 1,
       layers: [this.googleMaps],
       zoom: 7,
       center: position

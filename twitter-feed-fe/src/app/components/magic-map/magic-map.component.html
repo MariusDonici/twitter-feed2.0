@@ -1,36 +1,75 @@
-<button (click)="toggleMenu()" class="btn">
+<button *ngIf="menuState === 'in'" (click)="toggleMenu()" class="btn">
   <span>toggle menu</span>
 </button>
 <div *ngIf="isDataLoaded()">
+  <div class="slide-menu" [@slideInOut]="menuState">
+
+
+    <!--LANGUAGE SELECT-->
+    <div class="dropdown-wrapper">
+      <h2>Language</h2>
+      <angular2-multiselect *ngIf="languagesFromGroups.length !== 0"
+                            [data]="languagesFromGroups"
+                            [settings]="languagesSettings"
+                            [(ngModel)]="selectedLanguages"
+                            (onSelect)="onItemSelect($event)"
+                            (onDeSelect)="OnItemDeSelect($event)"
+                            (onSelectAll)="onSelectAll($event)"
+                            (onDeSelectAll)="onDeSelectAll($event)">
+
+        <c-item>
+          <ng-template let-item="item">
+            <img src="{{randomUtils.getFlagLinkForLanguage(item.filterValue)}}"/>
+            <label style="color: black;">({{item.count}})</label>
+          </ng-template>
+        </c-item>
+
+      </angular2-multiselect>
+    </div>
+
+    <!--SOURCE SELECT-->
+
+    <div class="dropdown-wrapper">
+      <h2>Source</h2>
+      <angular2-multiselect *ngIf="sourcesFromGroups.length !== 0"
+                            [data]="sourcesFromGroups"
+                            [settings]="sourcesSettings"
+                            [(ngModel)]="selectedSources"
+                            (onSelect)="onItemSelect($event)"
+                            (onDeSelect)="OnItemDeSelect($event)"
+                            (onSelectAll)="onSelectAll($event)"
+                            (onDeSelectAll)="onDeSelectAll($event)">
+
+        <c-item>
+          <ng-template let-item="item">
+            <!--TODO: Refactor this please :(-->
+            <!--TODO: Also add style for all labels-->
+            <i *ngIf="randomUtils.getIconClassForSource(item.filterValue).toString() !== 'ion-android-globe'"
+               class="{{randomUtils.getIconClassForSource(item.filterValue)}}"
+               style="color:black; font-size:30px;"></i>
+            <label *ngIf="randomUtils.getIconClassForSource(item.filterValue).toString() === 'ion-android-globe'"
+                   style="color:black;">{{item.filterValue}}</label>
+            <label style="color: black;">({{item.count}})</label>
+          </ng-template>
+        </c-item>
+
+      </angular2-multiselect>
+    </div>
+    <button class="close-button" (click)="toggleMenu()">
+      <i class="ion-arrow-left-c"></i>
+    </button>
+  </div>
   <div class="map-wrapper">
     <ngx-loading [show]="!markersLoaded" [config]="{ backdropBorderRadius: '14px' }"></ngx-loading>
+
     <div id="myMap"
          leaflet
          [leafletOptions]="options"
          (leafletMapReady)="onMapReady($event)">
     </div>
+
+
   </div>
-</div>
-
-
-<!--<app-slider-menu [@slideInOut]="menuState"></app-slider-menu>-->
-
-<div class="slide-menu" [@slideInOut]="menuState">
-  <ul>
-    <li>Language filters</li>
-    <li><a href="#" (click)="hideSomething()">Menu Item</a></li>
-    <br/>
-    <br/>
-    <li>Source filters</li>
-    <li>Menu Item</li>
-    <li>Menu Item</li>
-    <li>Menu Item</li>
-    <li>Menu Item</li>
-  </ul>
-  <button class="close-button" (click)="toggleMenu()">
-    <i class="ion-arrow-left-c"></i>
-  </button>
-
 </div>
 
 
@@ -38,24 +77,3 @@
   <h3>Loaded tweets : {{tweetCount}}</h3>
 </div>
 
-<!--DONE with I guess-->
-<!--<div *ngIf="loading">-->
-<!--<img class="loader" src="https://media.giphy.com/media/rDeOjM6DZ1qda/giphy.gif" width="128" height="128">-->
-<!--</div>-->
-
-<!-- <div *ngIf="!loading">
-  <div id="myMap" leaflet [leafletOptions]="options" [leafletMarkerCluster]="markerClusterData" [leafletMarkerClusterOptions]="markerClusterOptions"
-    (leafletMarkerClusterReady)="markerClusterReady($event)" (leafletMapReady)="onMapReady($event)">
-  </div>
-</div> -->
-
-<!--
-<div>
-  <div *ngFor="let language of languageFilters">
-    <label class="container">
-      <input type="checkbox" name="language.name" checked="{{filterItems.languages && -1 !== filterItems.languages.indexOf(language.name) ? 'checked' : ''}}"
-        (change)="handleLanguageEvent($event)">
-      <span class="checkmark">{{language.name}}({{language.value}})</span>
-    </label>
-  </div>
-</div> -->

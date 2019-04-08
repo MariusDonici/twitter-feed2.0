@@ -3,12 +3,15 @@ import { Layer, LayerGroup, LayerOptions } from "leaflet";
 export class CustomLayerGroup extends LayerGroup {
 
   name: string;
-  type: GroupType;
+
+  //TYPE: LANGUAGE, SOURCE
+  type: string;
   selected: boolean = true;
 
-  constructor(layers?: Layer[], options?: LayerOptions, groupName?: string, type?: GroupType) {
+  constructor(layers?: Layer[], options?: LayerOptions, groupName?: string, type?: string) {
     super(layers, options);
     this.name = groupName;
+    this.type = type;
   }
 
   getGroupName(): string {
@@ -28,11 +31,12 @@ export class CustomLayerGroup extends LayerGroup {
   }
 
 
-  getType(): GroupType {
+
+  getType(): string {
     return this.type;
   }
 
-  setType(type: GroupType): void{
+  setType(type: string): void{
     this.type = type;
   }
 

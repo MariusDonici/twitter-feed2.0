@@ -1,11 +1,12 @@
 package ro.uaic.twitter.utils;
 
+import org.springframework.stereotype.Component;
 import ro.uaic.twitter.models.entities.TweetDetailsEntity;
 import ro.uaic.twitter.models.entities.TweetEntity;
-import org.springframework.stereotype.Component;
 import twitter4j.Status;
 
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 @Component
 public class TweetMapper {
@@ -19,7 +20,7 @@ public class TweetMapper {
         tweet.setId(Long.toString(status.getId()));
         tweet.setLanguage(status.getLang());
         tweet.setIsRetweet(status.isRetweet());
-        tweet.setSource(status.getSource().replaceAll("<.*?>",""));
+        tweet.setSource(aggregateSimilarSources(status.getSource()));
 
         tweetDetails.setUser(status.getUser());
         tweetDetails.setListOfCountrieWitheld(status.getWithheldInCountries());
@@ -33,6 +34,32 @@ public class TweetMapper {
 
         return tweet;
     };
+
+
+    private String aggregateSimilarSources(String tweetSource) {
+        //Strip html tags
+        String sourceString = tweetSource.replaceAll("<.*?>", "");
+
+
+        String aggregatedString = sourceString;
+        if (sourceString.toLowerCase().contains("ttn")) {
+            aggregatedString = "TTN Traffic";
+        }
+
+        if (Stream.of("ios", "iphone").anyMatch(sourceString.toLowerCase()::contains)) {
+            aggregatedString = "iPhone";
+        }
+
+        if (Stream.of("android").anyMatch(sourceString.toLowerCase()::contains)) {
+            aggregatedString = "Android";
+        }
+
+        if (Stream.of("foursquare").anyMatch(sourceString.toLowerCase()::contains)) {
+            aggregatedString = "Foursquare";
+        }
+
+        return aggregatedString;
+    }
 
 }
 
