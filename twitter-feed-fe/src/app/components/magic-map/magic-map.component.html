@@ -1,9 +1,14 @@
-<button *ngIf="menuState === 'in'" (click)="toggleMenu()" class="btn">
-  <span>toggle menu</span>
-</button>
-<div *ngIf="isDataLoaded()">
-  <div class="slide-menu" [@slideInOut]="menuState">
+<div class="button-wrapper">
+  <button *ngIf="filterMenuState === 'in'" (click)="toggleMenu()" class="btn">
+    <span>toggle menu</span>
+  </button>
 
+  <button *ngIf="messageMenuState === 'out'" (click)="toggleMessageMenu()" class="btn message-button">
+    <span>Toggle message menu</span>
+  </button>
+</div>
+<div *ngIf="isDataLoaded()">
+  <div class="slide-menu left" [@slideInOut]="filterMenuState">
 
     <!--LANGUAGE SELECT-->
     <div class="dropdown-wrapper">
@@ -11,7 +16,7 @@
       <angular2-multiselect *ngIf="languagesFromGroups.length !== 0"
                             [data]="languagesFromGroups"
                             [settings]="languagesSettings"
-                            [(ngModel)]="selectedLanguages"
+                            [(ngModel)]="selectedFilter['LANGUAGE']"
                             (onSelect)="onItemSelect($event)"
                             (onDeSelect)="OnItemDeSelect($event)"
                             (onSelectAll)="onSelectAll($event)"
@@ -34,7 +39,7 @@
       <angular2-multiselect *ngIf="sourcesFromGroups.length !== 0"
                             [data]="sourcesFromGroups"
                             [settings]="sourcesSettings"
-                            [(ngModel)]="selectedSources"
+                            [(ngModel)]="selectedFilter['SOURCE']"
                             (onSelect)="onItemSelect($event)"
                             (onDeSelect)="OnItemDeSelect($event)"
                             (onSelectAll)="onSelectAll($event)"
@@ -55,10 +60,42 @@
 
       </angular2-multiselect>
     </div>
+
+
     <button class="close-button" (click)="toggleMenu()">
       <i class="ion-arrow-left-c"></i>
     </button>
   </div>
+
+  <div class="slide-menu right" [@slideInOut]="messageMenuState">
+
+
+    <h1 style="display: inline-block; margin-left: 50px;">{{tweetsWithinBounds.length}}</h1>
+    <button class="btn-iceblue" style="margin-left: 50px;" (click)="refreshTweetWithinBounds()">REFRESH</button>
+    <button class="btn-iceblue" style="margin-left: 50px;" (click)="retrieveTweetForMarkersWithinBounds()">RETRIEVE</button>
+
+    <div class="tweet-message-wrapper">
+      <div *ngIf="tweetsInMessageArea.length > 0" class="scrollbar" id='style-2' style="overflow-y: scroll; height: 90%;">
+        <div class="tweet-card" *ngFor="let tweet of tweetsInMessageArea" (click)="goToMarker(tweet.id)">
+          <img src="{{tweet.details.user.biggerProfileImageURL}}" class="tweet-card-pp" alt="">
+          <div class="tweet-card-header">
+            <div class="tweet-card-name">{{tweet.details.user.screenName}}</div>
+            <div class="tweet-card-uname">{{tweet.details.user.name}}</div>
+          </div>
+          <small>{{ tweet.createdAt }}</small>
+          <div class="tweet">
+            {{ tweet.details.tweetText }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="close-button" (click)="toggleMessageMenu()">
+      <i class="ion-arrow-right-c"></i>
+    </button>
+  </div>
+
+
   <div class="map-wrapper">
     <ngx-loading [show]="!markersLoaded" [config]="{ backdropBorderRadius: '14px' }"></ngx-loading>
 

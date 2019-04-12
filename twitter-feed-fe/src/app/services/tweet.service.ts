@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Tweet } from '../models/tweet';
 import { Observable } from 'rxjs';
 import 'rxjs/add/operator/map';
 import { Subject } from 'rxjs/Subject';
-
 // tslint:disable-next-line:import-blacklist
 import 'rxjs/Rx';
 
@@ -48,6 +47,10 @@ export class TweetService {
     return this.http.get<Tweet>(this.tweetUrl + "/" + id);
   }
 
+  public getTweetsByIds(ids: number[]): Observable<Tweet[]> {
+    return this.http.get<Tweet[]>(this.tweetUrl + "/list?ids=" + ids.join(","))
+  }
+
   public retrieveHeroesPageable(): Observable<any[]> {
     return this.getTweets(this.pageNumber, this.sizeOfPage);
 
@@ -60,7 +63,6 @@ export class TweetService {
     //   return Observable.of(tweets);
     // });
   }
-
 
 
 }

@@ -1,87 +1,97 @@
-@import url(https://fonts.googleapis.com/css?family=Lato);
-@import url(https://fonts.googleapis.com/css?family=Oswald);
-@import url(https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css);
+/*body {*/
+  /*font-family: 'Oxygen', sans-serif;*/
+  /*background: #F5F5F5;*/
+  /*overflow-x: hidden;*/
+/*}*/
+
+/*a {*/
+  /*text-decoration: none;*/
+  /*color: #FFFFFF;*/
+/*}*/
+
+/*#app {*/
+  /*max-width: 500px;*/
+  /*margin: 0 auto;*/
+/*}*/
 
 .tweet-card {
-  font-family: 'Lato', Arial, sans-serif;
-  position: relative;
+  max-width: 500px;
+  display: block;
+  overflow: auto;
+  background-color: #1B2936;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+  border-radius: 5px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 10px;
+  /*margin-bottom: 10px;*/
+  margin-top:20px;
+}
+
+.tweet-card-pp {
+  border-radius: 50% !important;
+  cursor: pointer;
   display: inline-block;
-  overflow: hidden;
-  margin: 10px 0px 10px;
-  min-width: 250px;
-  max-width: 310px;
-  width: 100%;
-  background-color: #ffffff;
-  color: #2B2B2B;
-  text-align: center;
-  /*box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);*/
+  vertical-align: middle;
 }
 
-.tweet-card * {
-  -webkit-box-sizing: border-box;
-  box-sizing: border-box;
-}
-
-.profile-wrapper {
-
-}
-
-.profile-wrapper .followers-wrapper {
+.tweet-card-header {
   display: inline-block;
-  width: 15%;
-  font-size: 15px;
-  /*margin-left: -20px;*/
-  /*margin-right: 40px;*/
+  vertical-align: middle;
+  margin-left: 10px;
+  cursor: pointer;
 }
 
-.profile-wrapper .tweet-count {
-  font-size: 15px;
-  display: inline-block;
-  width:15%;
+.tweet-card-name {
+  vertical-align: middle;
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #FFFFFF;
 }
 
-.tweet-card .profile-image {
-  /*padding: 15% 10% 0;*/
-  display: inline-block;
-  width:60%;
+.tweet-card-uname {
+  vertical-align: middle;
+  color: #FFFFFF;
 }
 
-.tweet-card .profile-image img {
-  /*vertical-align: top;*/
-  position: relative;
-  border-radius: 50%;
-  /*max-width: 50%;*/
-  /*margin-left: 10px;*/
+small {
+  float: right;
 }
 
-.tweet-card h3 {
-  font-family: 'Oswald';
-  text-transform: uppercase;
-  font-size: 20px;
-  font-weight: 400;
-  line-height: 24px;
-  margin: 3px 0;
+.tweet {
+  margin-top: 20px;
+  font-size: 14px;
 }
 
-.tweet-card h5 {
-  font-weight: 400;
-  margin: 0;
-  text-transform: uppercase;
-  color: #888;
-  letter-spacing: 1px;
+
+#style-2::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  background-color: #1a2580;
 }
 
-.tweet-card .icons i {
-  color: #999;
-  display: inline-block;
-  margin-right: 5px;
-  font-size: 1.5em;
+#style-2::-webkit-scrollbar {
+  width: 12px;
+  background-color: #1a2580;
 }
 
-.tweet-card .icons i:hover {
-  color: #555;
+#style-2::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, .3);
+  background-color: #D62929;
 }
 
-.tweet-card .icons i a {
-  text-decoration: none;
+.scrollbar {
+  margin-right: 10px;
+  float: left;
+  height: 100%;
+  overflow-y: scroll;
+  margin-bottom: 25px;
+  margin-top:50px;
+}
+
+.tweet-message-wrapper{
+  top:0px;
+  height:95%;
 }

@@ -1,29 +1,30 @@
-import {AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, ViewEncapsulation} from "@angular/core";
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, ViewEncapsulation } from "@angular/core";
 import * as L from "leaflet";
 import "leaflet.markercluster";
-import {MapUtils} from "../../utils/map-utils";
-import {LocationService} from "../../services/location.service";
-import {MapService} from "../../services/map.service";
-import {TweetService} from "../../services/tweet.service";
-import {Tweet} from "../../models/tweet";
-import {FilterService} from "../../services/filter.service";
-import {CustomMarker} from "../../models/marker";
-import {animate, state, style, transition, trigger} from "@angular/animations";
-import {subGroup} from 'assets/leaflet.featuregroup.subgroup.js';
+import { MapUtils } from "../../utils/map-utils";
+import { LocationService } from "../../services/location.service";
+import { MapService } from "../../services/map.service";
+import { TweetService } from "../../services/tweet.service";
+import { Tweet } from "../../models/tweet";
+import { FilterService } from "../../services/filter.service";
+import { CustomMarker } from "../../models/marker";
+import { animate, state, style, transition, trigger } from "@angular/animations";
+import { subGroup } from 'assets/leaflet.featuregroup.subgroup.js';
 import 'assets/sliderControl.js';
 import '../../../../node_modules/leaflet.markercluster.layersupport/dist/leaflet.markercluster.layersupport.js'
-import {DataAggregationUtils} from "../../utils/data-aggregation-utils";
-import {GroupService} from "../../services/group.service";
-import {CustomLayerGroup} from "../../models/CustomLayerGroup";
-import {FilterDTO} from "../../models/filder-dto";
-import {RandomUtils} from "../../utils/random-utils";
+import { DataAggregationUtils } from "../../utils/data-aggregation-utils";
+import { GroupService } from "../../services/group.service";
+import { CustomLayerGroup } from "../../models/CustomLayerGroup";
+import { FilterDTO } from "../../models/filder-dto";
+import { RandomUtils } from "../../utils/random-utils";
+import { GroupFiltersWrapper } from "../../models/wrappers/group-filters-wrapper";
 
 
 @Component({
   selector: "app-magic-map",
   templateUrl: "./magic-map.component.html",
 
-  styleUrls: ["./magic-map.component.css", "./tweet-card.css", "./dropdown-style.css"],
+  styleUrls: ["./magic-map.component.css", "./tweet-pop-up.css", "./dropdown-style.css","./tweet-card.css"],
   encapsulation: ViewEncapsulation.None,
   animations: [
     trigger('slideInOut', [
@@ -39,31 +40,36 @@ import {RandomUtils} from "../../utils/random-utils";
   ]
 })
 export class MagicMapComponent implements OnInit, AfterViewInit {
+
+  //MAP STUFF
   map: L.Map;
-  loading = true;
   options: L.MapOptions;
   markers: CustomMarker[] = [];
   parentMarkersGroup: L.MarkerClusterGroup = new L.MarkerClusterGroup([], null);
+  loading = true;
 
+  //Filtering stuff
   allGroupLayers: CustomLayerGroup[] = [];
   languagesFromGroups: FilterDTO[] = [];
   sourcesFromGroups: FilterDTO[] = [];
 
-  selectedLanguages: FilterDTO[] = [];
-  selectedSources: FilterDTO[] = [];
+  filters: string[] = ['LANGUAGE', 'SOURCE'];
+  selectedFilter: any = {};
+
+  groupFilterWrappers: GroupFiltersWrapper[] = [];
 
   languagesSettings = this.getDropdownSettings([]);
   sourcesSettings = this.getDropdownSettings([]);
 
-
-  filteredMarkers: CustomMarker[] = [];
-
   layerControl = L.control.layers(this.mapService.baseMaps, null);
 
-  tweets: Tweet[] = [];
+  markersLoaded = false;
   tweetCount: number = 0;
 
-  markersLoaded = false;
+
+  // Message area stuff
+  tweetsInMessageArea: Tweet[] = [];
+  tweetsWithinBounds: number[] = [];
 
   // Marker cluster stuff
   markerClusterGroup: L.MarkerClusterGroup;
@@ -93,13 +99,20 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
   ) {
   }
 
-  menuState: string = 'in';
+  filterMenuState: string = 'in';
+  messageMenuState: string = 'out';
 
   toggleMenu() {
-    this.menuState = this.menuState === 'out' ? 'in' : 'out';
+    this.filterMenuState = this.filterMenuState === 'out' ? 'in' : 'out';
+  }
+
+  toggleMessageMenu() {
+    this.messageMenuState = this.messageMenuState === 'in' ? 'out' : 'in';
   }
 
   ngOnInit() {
+    this.filters.forEach(f => this.selectedFilter[f] = []);
+
     this.locationService.getLocation().subscribe(coords => {
       this.options = this.mapUtils.getMapOptions(L.latLng(coords.latitude, coords.longitude));
     });
@@ -110,21 +123,11 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
     this.map = map;
     this.map.on('overlayremove', (e) => this.handleLayerChange(e, 'overlayremove'));
     this.map.on('overlayadd', (e) => this.handleLayerChange(e, 'overlayadd'));
+    // this.map.on('moveend', (e) => this.refreshTweetWithinBounds())
   }
 
   private handleLayerChange(e: any, operation: string): void {
-    if (operation === 'overlayremove') {
-      e.layer.selected = false;
-      let tweetIds = this.filteredMarkers.map(m => m.tweet.id);
-      e.layer.getLayers().forEach(marker => {
-        if (tweetIds.indexOf(marker.tweet.id) === -1) {
-          this.filteredMarkers.push(marker);
-        }
-      })
 
-    } else {
-      e.layer.selected = true;
-    }
   }
 
   private getTweets() {
@@ -140,11 +143,15 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
   }
 
   private addLayersWithSupportLayerMethod() {
+
+    //Init filters
     let languages = this.dataAggregationUtils.retrieveTweetFieldMap(this.markers.map(m => m.tweet.language));
     let customGroupForLanguages = this.groupService.retrieveGroupsForFilter(languages, "LANGUAGE", 30);
+    this.groupFilterWrappers.push(new GroupFiltersWrapper("LANGUAGE", Array.from(customGroupForLanguages.values())));
 
     let sources = this.dataAggregationUtils.retrieveTweetFieldMap(this.markers.map(m => m.tweet.source));
     let customGroupsForSources = this.groupService.retrieveGroupsForFilter(sources, "SOURCE", 30);
+    this.groupFilterWrappers.push(new GroupFiltersWrapper("SOURCE", Array.from(customGroupsForSources.values())));
 
 
     this.markers.forEach(marker => {
@@ -155,40 +162,49 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
     //Layer support
 
 
-    let layerSupportGroup = L.markerClusterGroup.layerSupport({maxClusterRadius: 75});
+    let layerSupportGroup = L.markerClusterGroup.layerSupport({ maxClusterRadius: 75 });
 
 
     //Add all the layer group the the support group,map and layerControl
     layerSupportGroup.addTo(this.map);
 
-    Array.from(customGroupForLanguages.entries()).forEach((group) => {
+    Array.from(customGroupForLanguages.entries()).forEach((group, index) => {
       this.allGroupLayers.push(group[1]);
       layerSupportGroup.checkIn(group[1]);
-      group[1].addTo(this.map);
+      let filter = new FilterDTO(group[0], group[1].getLayers().length, group[1].type);
+      if (index === 0) {
+        group[1].addTo(this.map);
+        group[1].selected = true;
+        this.selectedFilter['LANGUAGE'].push(filter);
+      }
       // this.layerControl.addOverlay(group[1], this.getFlagLinkForLanguage(group[0]).toString())
-      this.languagesFromGroups.push(new FilterDTO(group[0], group[1].getLayers().length, group[1].type))
+      this.languagesFromGroups.push(filter);
     });
 
-    Array.from(customGroupsForSources.entries()).forEach((group) => {
+    Array.from(customGroupsForSources.entries()).forEach((group, index) => {
       this.allGroupLayers.push(group[1]);
       layerSupportGroup.checkIn(group[1]);
-      group[1].addTo(this.map);
+      let filter = new FilterDTO(group[0], group[1].getLayers().length, group[1].type);
+      if (index === 0) {
+        // group[1].addTo(this.map);
+        // this.selectedSources.push(filter);
+      }
       // this.layerControl.addOverlay(group[1], this.getIconClassForSource(group[0]).toString())
       this.sourcesFromGroups.push(new FilterDTO(group[0], group[1].getLayers().length, group[1].type))
     });
 
     this.layerControl.addTo(this.map);
 
-    // var sliderControl = L.control.sliderControl({
-    //   position: "topright",
-    //   layer: layerSupportGroup,
-    //   range: true,
-    //   showAllOnStart: true
-    // });
-    //
-    // this.map.addControl(sliderControl);
-    // this.cdRef.markForCheck();
-    // sliderControl.startSlider();
+    var sliderControl = L.control.sliderControl({
+      position: "topright",
+      layer: layerSupportGroup,
+      range: true,
+      showAllOnStart: true
+    });
+
+    this.map.addControl(sliderControl);
+    this.cdRef.markForCheck();
+    sliderControl.startSlider();
 
 
     this.markersLoaded = true;
@@ -198,11 +214,9 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
   private getMarkersFromTweets(tweets: any[]): CustomMarker[] {
     return tweets.map(tweet => {
       if (tweet.latitude && tweet.longitude) {
-        this.tweets.push(tweet);
-        // this.filteredTweets.push(tweet);
         const marker = new CustomMarker(tweet,
           [tweet.latitude, tweet.longitude],
-          {icon: this.mapUtils.getIcon()}
+          { icon: this.mapUtils.getIcon() }
         );
 
         marker.on('click', function (e) {
@@ -245,7 +259,7 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
 
 
     let user = tweet.details.user;
-    let htmlContent = "<figure class=\"tweet-card\">\n" +
+    let htmlContent = "<figure class=\"tweet-pop-up\">\n" +
       "    <div class=\"profile-wrapper\">\n" +
       "      <div class=\"followers-wrapper\">\n" +
       "        <div class=\"followers\">\n" +
@@ -312,78 +326,78 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
     this.markersLoaded = true;
   }
 
-  markerClusterReady(group: L.MarkerClusterGroup) {
-    this.markerClusterGroup = group;
-  }
-
-
-  updateCluster() {
-    // console.log("updating cluster");
-    // this.markerClusterGroup.clearLayers();
-    // this.markerClusterData = [];
-    // this.markerClusterGroup.addLayers(this.markers);
-  }
-
-
-  //TODO: Do something like active filter list and remove/add markers in the layer based on that
-  hideSomething() {
-
-  }
 
 //  Please move me FILTERING stuff
-
   //TODO: Please find a better way to disable this.
   onItemSelect(item: FilterDTO) {
 
+
+    //Exclude the other filter method
+    //#############################################################
     //Handle case where no filters are selected.
-    this.allGroupLayers.forEach(group => {
-      this.map.removeLayer(group);
-    });
+    // this.allGroupLayers.forEach(group => {
+    //   this.map.removeLayer(group);
+    // });
 
     this.allGroupLayers.forEach(group => {
-      if (item.filterType == 'LANGUAGE') {
-        if (this.selectedLanguages.map(l => l.filterValue).indexOf(group.name) >= 0) {
-          this.map.addLayer(group);
-        }
-      }
-
-      if (item.filterType == 'SOURCE') {
-        if (this.selectedSources.map(l => l.filterValue).indexOf(group.name) >= 0) {
-          this.map.addLayer(group);
-        }
+      if (this.selectedFilter[item.filterType].map(l => l.filterValue).indexOf(group.name) >= 0) {
+        this.map.addLayer(group);
+        group.selected = true;
       }
     });
 
-    this.sourcesSettings = this.getDropdownSettings([this.selectedLanguages]);
-    this.languagesSettings = this.getDropdownSettings([this.selectedSources]);
+    this.sourcesSettings = this.getDropdownSettings([this.selectedFilter['LANGUAGE']]);
+    this.languagesSettings = this.getDropdownSettings([this.selectedFilter['SOURCE']]);
+  }
+
+  //Custom marker filter
+  applyFilter(data: CustomLayerGroup, filters: any) {
+    return data.getLayers().filter((item: CustomMarker) => {
+      return Object.keys(filters).map(f => {
+        return filters[f].length === 0 || filters[f].map(d => d.filterValue).indexOf(item.applicableFilter[f]) >= 0 && data.type === f
+      }).reduce((x, y) => x && y, true);
+    });
   }
 
   OnItemDeSelect(item: FilterDTO) {
 
     this.allGroupLayers.filter(group => group.getGroupName() === item.filterValue).forEach(group => {
       this.map.removeLayer(group);
+      group.selected = false;
     });
 
 
     //Case of which no filter is selected.
-    if (this.selectedSources.length === 0 && this.selectedLanguages.length === 0) {
-      this.allGroupLayers.forEach(group => {
-        this.map.addLayer(group);
-      });
-    }
+    // if (this.selectedSources.length === 0 && this.selectedLanguages.length === 0) {
+    //   this.allGroupLayers.forEach(group => {
+    //     this.map.addLayer(group);
+    //   });
+    // }
 
-    this.sourcesSettings = this.getDropdownSettings([this.selectedLanguages]);
-    this.languagesSettings = this.getDropdownSettings([this.selectedSources]);
+    this.sourcesSettings = this.getDropdownSettings([this.selectedFilter['LANGUAGE']]);
+    this.languagesSettings = this.getDropdownSettings([this.selectedFilter['SOURCE']]);
   }
 
   onSelectAll(items: FilterDTO[]) {
-    this.sourcesSettings = this.getDropdownSettings([this.selectedLanguages]);
-    this.languagesSettings = this.getDropdownSettings([this.selectedSources]);
+
+    this.allGroupLayers.forEach(group => this.map.removeLayer(group));
+
+    //Case of which no filter is selected.
+    this.allGroupLayers.filter(group => group.getType() === items[0].filterType).forEach(group => {
+      this.map.addLayer(group);
+    });
+
+    this.sourcesSettings = this.getDropdownSettings([this.selectedFilter['LANGUAGE']]);
+    this.languagesSettings = this.getDropdownSettings([this.selectedFilter['SOURCE']]);
   }
 
+  //TODO: Implement me.
   onDeSelectAll(items: FilterDTO[]) {
-    this.sourcesSettings = this.getDropdownSettings([this.selectedLanguages]);
-    this.languagesSettings = this.getDropdownSettings([this.selectedSources]);
+
+    this.allGroupLayers.forEach(g => this.map.removeLayer(g));
+
+    this.sourcesSettings = this.getDropdownSettings([this.selectedFilter['LANGUAGE']]);
+    this.languagesSettings = this.getDropdownSettings([this.selectedFilter['SOURCE']]);
   }
 
   //Refactor
@@ -399,6 +413,43 @@ export class MagicMapComponent implements OnInit, AfterViewInit {
       enableSearchFilter: true,
       disabled: lists.filter(l => l.length > 0).length > 0
     };
+  }
+
+
+//  #######################################################################
+// Message area
+
+  refreshTweetWithinBounds() {
+    let tweetWithinBounds = [];
+
+    this.allGroupLayers.forEach(g => {
+      if (g.isSelected()) {
+        let markersIds = g.getLayers().filter((m: CustomMarker) => this.map.getBounds().contains(m.getLatLng())).map((m: CustomMarker) => m.tweet.id);
+
+        tweetWithinBounds.push(...markersIds);
+      }
+    });
+
+    this.tweetsWithinBounds = tweetWithinBounds;
+  }
+
+  retrieveTweetForMarkersWithinBounds() {
+    if (this.tweetsWithinBounds.length !== 0) {
+      this.tweetService.getTweetsByIds(this.tweetsWithinBounds).subscribe(tweets => {
+        this.tweetsInMessageArea = tweets;
+      })
+    }
+  }
+
+  goToMarker(id: String) {
+    this.markers.forEach(m => {
+      if (m.tweet.id === id) {
+        this.map.flyTo(m.getLatLng(), 15, { duration: 3, easeLinearity: 0.5});
+
+        //TODO: See if fire a click event is really necessary.
+        // m.fire('click')
+      }
+    });
   }
 
 }

@@ -6,7 +6,7 @@ export class CustomLayerGroup extends LayerGroup {
 
   //TYPE: LANGUAGE, SOURCE
   type: string;
-  selected: boolean = true;
+  selected: boolean = false;
 
   constructor(layers?: Layer[], options?: LayerOptions, groupName?: string, type?: string) {
     super(layers, options);

@@ -33,4 +33,9 @@ public class TweetReadController {
     public TweetDTO retrieveTweetById(@PathVariable("tweetId") String tweetId){
         return tweetReadService.retrieveTweetById(tweetId);
     }
+
+    @GetMapping("/list")
+    public List<TweetDTO> retrieveTweetByIds(@RequestParam("ids") List<String> ids){
+        return tweetReadService.retrieveTweetsByIdPaginated(ids);
+    }
 }

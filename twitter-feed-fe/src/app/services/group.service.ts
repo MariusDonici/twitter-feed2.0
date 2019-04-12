@@ -26,7 +26,6 @@ export class GroupService {
 
     customLayerGroups.forEach((g) => customLayerGroupMap.set(g.name, g));
 
-
     return customLayerGroupMap;
   }
 }

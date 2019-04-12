@@ -23,5 +23,6 @@ public class TweetEntity {
     private String source;
     private Boolean isRetweet;
 
+    //TODO: Use Place.getCountry() instead of language for the flag.
     private TweetDetailsEntity tweetDetails;
 }

@@ -10,5 +10,7 @@ public interface TweetReadService {
 
     List<TweetDTO> retrieveTweetsWithCoordinates();
 
+    List<TweetDTO> retrieveTweetsByIdPaginated(List<String> ids);
+
     TweetDTO retrieveTweetById(String id);
 }

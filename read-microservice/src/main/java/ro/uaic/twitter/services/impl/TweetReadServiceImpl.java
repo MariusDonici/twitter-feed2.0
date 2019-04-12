@@ -1,5 +1,6 @@
 package ro.uaic.twitter.services.impl;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import ro.uaic.twitter.repositories.TweetRepository;
 import ro.uaic.twitter.services.TweetReadService;
 import ro.uaic.twitter.utils.TweetMapper;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -53,6 +55,16 @@ public class TweetReadServiceImpl implements TweetReadService {
         } else {
             throw new RuntimeException();
         }
+    }
+
+    @Override
+    public List<TweetDTO> retrieveTweetsByIdPaginated(List<String> ids) {
+        Iterable<TweetEntity> allById = tweetRepository.findAllById(ids);
+
+        List<TweetEntity> tweets = new ArrayList<>();
+        CollectionUtils.addAll(tweets, allById.iterator());
+
+        return tweets.stream().map(tweet -> mapToDto(tweet, true)).collect(Collectors.toList());
     }
 
     private TweetDTO mapToDto(TweetEntity tweet, Boolean includeDetails) {
