@@ -48,6 +48,7 @@
     "net": "^1.0.2",
     "ng-multiselect-dropdown": "^0.2.3",
     "ng-socket-io": "^0.2.4",
+    "ng5-slider": "^1.1.14",
     "ngx-loading": "^1.0.14",
     "rmdir": "^1.2.0",
     "rxjs": "^6.0.0",

@@ -34,3 +34,4 @@ npm install jquery --save
 npm i @angular/material@6.4.7
 npm i ng-multiselect-dropdown
 npm install moment --save
+npm i ng5-slider

@@ -1,19 +1,3 @@
-/*body {*/
-  /*font-family: 'Oxygen', sans-serif;*/
-  /*background: #F5F5F5;*/
-  /*overflow-x: hidden;*/
-/*}*/
-
-/*a {*/
-  /*text-decoration: none;*/
-  /*color: #FFFFFF;*/
-/*}*/
-
-/*#app {*/
-  /*max-width: 500px;*/
-  /*margin: 0 auto;*/
-/*}*/
-
 .tweet-card {
   max-width: 500px;
   display: block;
@@ -92,6 +76,6 @@ small {
 }
 
 .tweet-message-wrapper{
-  top:0px;
-  height:95%;
+  top:0;
+  height:98%;
 }

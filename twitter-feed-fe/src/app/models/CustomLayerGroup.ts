@@ -1,4 +1,5 @@
 import { Layer, LayerGroup, LayerOptions } from "leaflet";
+import { CustomMarker } from "./marker";
 
 export class CustomLayerGroup extends LayerGroup {
 
@@ -7,11 +8,17 @@ export class CustomLayerGroup extends LayerGroup {
   //TYPE: LANGUAGE, SOURCE
   type: string;
   selected: boolean = false;
+  filteredMarkers: CustomMarker[] = [];
+  allMarkers: CustomMarker[] = [];
 
   constructor(layers?: Layer[], options?: LayerOptions, groupName?: string, type?: string) {
     super(layers, options);
     this.name = groupName;
     this.type = type;
+  }
+
+  getCurrentMarkers(): CustomMarker[] {
+    return this.getLayers() as CustomMarker[];
   }
 
   getGroupName(): string {
@@ -31,14 +38,15 @@ export class CustomLayerGroup extends LayerGroup {
   }
 
 
-
   getType(): string {
     return this.type;
   }
 
-  setType(type: string): void{
+  setType(type: string): void {
     this.type = type;
   }
 
-
+  initializeAllMarkers():void{
+    this.allMarkers = this.getCurrentMarkers();
+  }
 }

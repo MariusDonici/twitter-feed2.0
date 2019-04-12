@@ -51,13 +51,13 @@ export class TweetService {
     return this.http.get<Tweet[]>(this.tweetUrl + "/list?ids=" + ids.join(","))
   }
 
-  public retrieveHeroesPageable(): Observable<any[]> {
+  public retrieveTweets(): Observable<any[]> {
     return this.getTweets(this.pageNumber, this.sizeOfPage);
 
     // return this.getTweets(this.pageNumber, this.sizeOfPage).concatMap((tweets: Tweet[]) => {
     //   if (tweets.length > 0) {
     //     this.pageNumber++;
-    //     return this.retrieveHeroesPageable().map((temp) => tweets.concat(temp));
+    //     return this.retrieveTweets().map((temp) => tweets.concat(temp));
     //   }
 
     //   return Observable.of(tweets);

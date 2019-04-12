@@ -69,7 +69,7 @@
   right: 0;
   left: auto;
 
-  width:25%;
+  width: 25%;
 }
 
 .slide-menu .close-button {
@@ -86,12 +86,12 @@
   outline: none;
 }
 
-.slide-menu.right .close-button{
-  left:5px;
+.slide-menu.right .close-button {
+  left: 5px;
 }
 
-.slide-menu.left .close-button{
-  right:5px;
+.slide-menu.left .close-button {
+  right: 5px;
 }
 
 .number-of-tweets {
@@ -104,4 +104,13 @@
   cursor: default;
   background: #1a2580;
   opacity: 0.5;
+}
+
+.time-slider-wrapper {
+  margin: -10px 40% 0;
+  width: 300px;
+  background: #1a2580;
+  opacity: 0.9;
+  z-index: 9999;
+  position: absolute;
 }
