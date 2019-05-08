@@ -3,7 +3,9 @@ package ro.uaic.twitter.models.dtos;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -22,6 +24,7 @@ public class TweetDTO {
     private String language;
     private String source;
     private Boolean isRetweet;
+    private List<String> hashtags = new ArrayList<>();
 
 
     private TweetDetails details;

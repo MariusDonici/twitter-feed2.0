@@ -1,5 +1,10 @@
-export class FilterItem {
+export class FilterItem{
+  type: string;
+  values: string[] = [];
 
-  languages: string[] = [];
-  bounds: L.LatLngBounds;
+
+  constructor(type: string, values: string[]) {
+    this.type = type;
+    this.values = values;
+  }
 }

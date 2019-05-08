@@ -4,6 +4,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import ro.uaic.twitter.models.dtos.FilterDTO;
 import ro.uaic.twitter.models.dtos.TweetDTO;
 import ro.uaic.twitter.models.dtos.TweetDetails;
 import ro.uaic.twitter.models.entities.TweetEntity;
@@ -11,9 +12,9 @@ import ro.uaic.twitter.repositories.TweetRepository;
 import ro.uaic.twitter.services.TweetReadService;
 import ro.uaic.twitter.utils.TweetMapper;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -67,6 +68,22 @@ public class TweetReadServiceImpl implements TweetReadService {
         return tweets.stream().map(tweet -> mapToDto(tweet, true)).collect(Collectors.toList());
     }
 
+//    @Override
+//    public List<TweetDTO> filterTweets(FilterDTO filter) {
+////        List<String> sourceValues = filter.getFilters().stream().anyMatch(f -> f.getType().equals("SOURCE")) ?
+////                filter.getFilters().stream().filter(f -> f.getType().equals("SOURCE")).findFirst().get().getValues() : Collections.emptyList();
+////
+////
+////        List<String> languageValues = filter.getFilters().stream().anyMatch(f -> f.getType().equals("LANGUAGE")) ?
+////                filter.getFilters().stream().filter(f -> f.getType().equals("LANGUAGE")).findFirst().get().getValues() : Collections.emptyList();
+////        return tweetRepository.findAllBySourceInAndLanguageInAndCreatedAtBetween(sourceValues,
+////                                                                                 languageValues,
+////                                                                                 filter.getRange().getStart(),
+////                                                                                 filter.getRange().getEnd())
+////                              .stream()
+////                              .map(tweet -> mapToDto(tweet, false)).collect(Collectors.toList());
+//    }
+
     private TweetDTO mapToDto(TweetEntity tweet, Boolean includeDetails) {
         TweetDTO tweetDTO = TweetDTO.builder()
                                     .id(tweet.getId())
@@ -75,7 +92,7 @@ public class TweetReadServiceImpl implements TweetReadService {
                                     .createdAt(tweet.getCreatedAt())
                                     .source(tweet.getSource())
                                     .language(tweet.getLanguage())
-                                    .isRetweet(tweet.getIsRetweet())
+                                    .hashtags(tweet.getHashtags())
                                     .build();
 
         if (includeDetails) {
@@ -85,10 +102,23 @@ public class TweetReadServiceImpl implements TweetReadService {
                                                     .user(tweet.getTweetDetails().getUser())
                                                     .place(tweet.getTweetDetails().getPlace())
                                                     .tweetText(tweet.getTweetDetails().getTweetText())
+                                                    .hashtags(new ArrayList<>(extractHashtags(tweet.getTweetDetails().getTweetText())))
                                                     .build();
             tweetDTO.setDetails(tweetDetails);
         }
 
         return tweetDTO;
+    }
+
+    private Set<String> extractHashtags(String text) {
+        Set<String> hashtags = new HashSet<>();
+
+        Pattern HASHTAG_PATTERN = Pattern.compile("#(\\w+)");
+        Matcher mat = HASHTAG_PATTERN.matcher(text);
+        while (mat.find()) {
+            hashtags.add(mat.group(1));
+        }
+
+        return hashtags;
     }
 }

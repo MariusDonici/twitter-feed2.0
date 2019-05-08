@@ -13,4 +13,6 @@ public class TwitterCollectorApplication {
     public static void main(String[] args) {
         SpringApplication.run(TwitterCollectorApplication.class, args);
     }
+
+
 }

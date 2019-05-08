@@ -8,11 +8,13 @@ import twitter4j.GeoLocation;
 import twitter4j.Place;
 import twitter4j.User;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
-@Document(collection = "tweets")
+@Document(collection = "tweets-revised")
 public class TweetEntity {
 
     @Id
@@ -21,7 +23,7 @@ public class TweetEntity {
     private GeoLocation geoLocation;
     private String language;
     private String source;
-    private Boolean isRetweet;
+    private List<String> hashtags = new ArrayList<>();
 
     //TODO: Use Place.getCountry() instead of language for the flag.
     private TweetDetailsEntity tweetDetails;

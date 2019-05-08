@@ -72,14 +72,37 @@
   width: 25%;
 }
 
+
+.close-button-wrapper {
+  color: #ffffff;
+  text-decoration: none;
+  text-shadow: 0 1px 0 #fff;
+  top: 0;
+  position: fixed;
+  background: #1a2580;
+  border: none;
+  cursor: pointer;
+  outline: none;
+}
+
+
+.slide-menu.left .close-button-wrapper {
+  left: 100%;
+}
+
+.slide-menu.right .close-button-wrapper {
+  right: 100%;
+}
+
+
 .slide-menu .close-button {
   color: #ffffff;
-  font-size: 30px;
-  position: absolute;
+  font-size: 50px;
   text-decoration: none;
   text-shadow: 0 1px 0 #fff;
   top: 5px;
-  background: transparent;
+  background: #1a2580;
+  opacity: 0.9;
   border: none;
   cursor: pointer;
   overflow: hidden;

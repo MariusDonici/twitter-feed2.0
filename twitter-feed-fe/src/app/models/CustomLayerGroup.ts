@@ -1,4 +1,5 @@
 import { Layer, LayerGroup, LayerOptions } from "leaflet";
+import * as L from "leaflet";
 import { CustomMarker } from "./marker";
 
 export class CustomLayerGroup extends LayerGroup {

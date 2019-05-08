@@ -10,7 +10,6 @@ import { FilterService } from "../../services/filter.service";
 import { CustomMarker } from "../../models/marker";
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { subGroup } from 'assets/leaflet.featuregroup.subgroup.js';
-import 'assets/sliderControl.js';
 import '../../../../node_modules/leaflet.markercluster.layersupport/dist/leaflet.markercluster.layersupport.js'
 import { DataAggregationUtils } from "../../utils/data-aggregation-utils";
 import { GroupService } from "../../services/group.service";
@@ -21,6 +20,7 @@ import { GroupFiltersWrapper } from "../../models/wrappers/group-filters-wrapper
 import { ChangeContext, CustomStepDefinition, Options } from "ng5-slider";
 import * as _ from 'lodash';
 import { DatePipe } from "@angular/common";
+import { FilterItemDto } from "../../models/filter-item-dto";
 
 @Component({
   selector: "app-magic-map",
@@ -45,6 +45,8 @@ export class MagicMapComponent implements OnInit {
 
   // ###################### SLIDER VARIABLES #####################################
   value: number = 0;
+  currentSliderFloor: number = 0;
+  currentSliderCeil: number = 0;
   highValue: number = 100;
   sliderOptions: Options = {};
 
@@ -54,6 +56,8 @@ export class MagicMapComponent implements OnInit {
   markers: CustomMarker[] = [];
   parentMarkersGroup: L.MarkerClusterGroup = new L.MarkerClusterGroup([], null);
   layerControl = L.control.layers(this.mapService.baseMaps, null);
+
+  layerSupportGroup: any;
 
 
   // ###################### FILTERING VARIABLES #####################################
@@ -80,7 +84,7 @@ export class MagicMapComponent implements OnInit {
   tweetsWithinBounds: number[] = [];
 
   // MENU STATES
-  filterMenuState: string = 'in';
+  filterMenuState: string = 'out';
   messageMenuState: string = 'out';
 
   constructor(
@@ -142,27 +146,40 @@ export class MagicMapComponent implements OnInit {
     //Layer support
 
 
-    let layerSupportGroup = L.markerClusterGroup.layerSupport({ maxClusterRadius: 75 });
+    this.layerSupportGroup = L.markerClusterGroup.layerSupport({
+      removeOutsideVisibleBounds: true,
+      chunkedLoading: true,
+      chunkProgress: (processed, total, elapsed, layersArray) => {
+        if (elapsed > 0) {
+          // if it takes more than a second to load, display the progress bar:
+          this.markersLoaded = false;
+        }
+        if (processed === total) {
+          // all markers processed - hide the progress bar:
+          this.markersLoaded = true;
+        }
+      }
+    });
 
 
     //Add all the layer group the the support group,map and layerControl
-    layerSupportGroup.addTo(this.map);
+    this.layerSupportGroup.addTo(this.map);
 
 
     //Add groups to the group layers and create filter
     Array.from(customGroupForLanguages.entries()).forEach((group, index) => {
       group[1].initializeAllMarkers();
       this.allGroupLayers.push(group[1]);
-      layerSupportGroup.checkIn(group[1]);
+      this.layerSupportGroup.checkIn(group[1]);
 
 
       //Create specific filter for group
       let filter = new FilterDTO(group[0], group[1].getCurrentMarkers().length, group[1].type);
-      if (index === 0) {
+      // if (index === 0) {
         group[1].addTo(this.map);
         group[1].selected = true;
         this.selectedFilter['LANGUAGE'].push(filter);
-      }
+      // }
       // this.layerControl.addOverlay(group[1], this.getFlagLinkForLanguage(group[0]).toString())
       this.languagesFromGroups.push(filter);
     });
@@ -170,7 +187,7 @@ export class MagicMapComponent implements OnInit {
     Array.from(customGroupsForSources.entries()).forEach((group, index) => {
       group[1].initializeAllMarkers();
       this.allGroupLayers.push(group[1]);
-      layerSupportGroup.checkIn(group[1]);
+      this.layerSupportGroup.checkIn(group[1]);
 
 
       //Create specific filter for group
@@ -194,6 +211,14 @@ export class MagicMapComponent implements OnInit {
 
   areOptionsLoaded() {
     return this.options;
+  }
+
+  updateProgressBar(processed, total, elapsed, layersArray): void {
+    if (this === undefined) {
+      return;
+    }
+
+
   }
 
 
@@ -244,24 +269,18 @@ export class MagicMapComponent implements OnInit {
   //TODO: Please find a better way to disable this.
   onItemSelect(item: FilterDTO) {
 
-
-    //Exclude the other filter method
-    //#############################################################
-    //Handle case where no filters are selected.
-    // this.allGroupLayers.forEach(group => {
-    //   this.map.removeLayer(group);
-    // });
-
     this.allGroupLayers.forEach(group => {
       if (this.selectedFilter[item.filterType].map(l => l.filterValue).indexOf(group.name) >= 0) {
         this.map.addLayer(group);
+        // this.layerSupportGroup.checkIn(group);
         group.selected = true;
+        this.handleSliderChangeForGroup(group, { floor: this.currentSliderFloor, ceil: this.currentSliderCeil });
       }
     });
 
-    this.sourcesSettings = this.getDropdownSettings([this.selectedFilter['LANGUAGE']]);
-    this.languagesSettings = this.getDropdownSettings([this.selectedFilter['SOURCE']]);
-    this.updateSlider()
+    this.refreshFilterState();
+
+    // this.handleFilterChange(item.filterType);
   }
 
   //Custom marker filter
@@ -273,25 +292,33 @@ export class MagicMapComponent implements OnInit {
     });
   }
 
-  OnItemDeSelect(item: FilterDTO) {
+  async OnItemDeSelect(item: FilterDTO) {
 
-    this.allGroupLayers.filter(group => group.getGroupName() === item.filterValue).forEach(group => {
-      this.map.removeLayer(group);
-      group.selected = false;
-    });
+    let toRemoveGroup = this.allGroupLayers.filter(group => group.getGroupName() === item.filterValue)[0];
 
+    if (toRemoveGroup) {
 
-    //Case of which no filter is selected.
-    // if (this.selectedSources.length === 0 && this.selectedLanguages.length === 0) {
-    //   this.allGroupLayers.forEach(group => {
-    //     this.map.addLayer(group);
-    //   });
-    // }
+      if (this.getElapsedTime(toRemoveGroup) > 1000) {
+        this.markersLoaded = false;
+        setTimeout(() => {
+          this.map.removeLayer(toRemoveGroup);
+          toRemoveGroup.selected = false;
+          this.markersLoaded = true;
+        }, this.getElapsedTime(toRemoveGroup) - 500);
+      } else {
+        this.map.removeLayer(toRemoveGroup);
+        toRemoveGroup.selected = false;
+      }
+    }
 
-    this.sourcesSettings = this.getDropdownSettings([this.selectedFilter['LANGUAGE']]);
-    this.languagesSettings = this.getDropdownSettings([this.selectedFilter['SOURCE']]);
-    this.updateSlider()
+    this.refreshFilterState();
+    // this.handleFilterChange(item.filterType);
   }
+
+  getElapsedTime(group: CustomLayerGroup): number {
+    return group.getCurrentMarkers().length / 10;
+  }
+
 
   onSelectAll(items: FilterDTO[]) {
 
@@ -303,20 +330,56 @@ export class MagicMapComponent implements OnInit {
       group.selected = true;
     });
 
-    this.sourcesSettings = this.getDropdownSettings([this.selectedFilter['LANGUAGE']]);
-    this.languagesSettings = this.getDropdownSettings([this.selectedFilter['SOURCE']]);
-    this.updateSlider()
+    this.refreshFilterState();
+
+    // this.handleFilterChange(items[0].filterType);
   }
 
+  //TODO: Handle laoding screen for deselecting all the markers
   onDeSelectAll(items: FilterDTO[]) {
     this.allGroupLayers.forEach(g => {
       this.map.removeLayer(g);
       g.selected = false;
     });
 
-    this.sourcesSettings = this.getDropdownSettings([this.selectedFilter['LANGUAGE']]);
-    this.languagesSettings = this.getDropdownSettings([this.selectedFilter['SOURCE']]);
-    this.updateSlider()
+    this.refreshFilterState();
+    // this.handleFilterChange(items[0].filterType);
+  }
+
+
+  //TODO: Find a way for multiple filters active.
+  handleFilterChange(filterType: string): void {
+
+    this.allGroupLayers.filter(g => g.isSelected()).forEach(g => {
+      g.getCurrentMarkers().forEach((m: CustomMarker) => {
+        if (!this.matchesTheSelectedFilters(m, g.getType())) {
+          g.removeLayer(m);
+          g.filteredMarkers.push(m);
+        }
+      });
+
+      //Handle unfilter markers
+      for (let i = g.filteredMarkers.length; i--;) {
+        let marker = g.filteredMarkers[i];
+
+        if (this.matchesTheSelectedFilters(marker, g.getType())) {
+          g.addLayer(marker);
+          g.filteredMarkers.splice(i, 1);
+        }
+      }
+    });
+
+  }
+
+  matchesTheSelectedFilters(m: CustomMarker, groupType: String): boolean {
+    let activeFilters = [];
+
+    let excludedFilters = this.filters;
+    let filterValues = excludedFilters.map(filterKey => this.selectedFilter[filterKey].map((f: FilterDTO) => f.filterValue));
+
+    activeFilters = activeFilters.concat.apply([], filterValues);
+
+    return m.getMarkerFilters().every((val) => activeFilters.includes(val))
   }
 
   //Refactor
@@ -332,6 +395,11 @@ export class MagicMapComponent implements OnInit {
       enableSearchFilter: true,
       disabled: lists.filter(l => l.length > 0).length > 0
     };
+  }
+
+  private refreshFilterState() {
+    this.sourcesSettings = this.getDropdownSettings([this.selectedFilter['LANGUAGE']]);
+    this.languagesSettings = this.getDropdownSettings([this.selectedFilter['SOURCE']]);
   }
 
 
@@ -391,8 +459,8 @@ export class MagicMapComponent implements OnInit {
       this.value = stepArrays[0].value;
       this.highValue = stepArrays[stepArrays.length - 1].value;
 
-      options.floor = stepArrays[0];
-      options.ceil = stepArrays[stepArrays.length - 1];
+      options.floor = stepArrays[0].value;
+      options.ceil = stepArrays[stepArrays.length - 1].value;
       options.stepsArray = stepArrays;
       options.autoHideLimitLabels = true;
       options.translate = (v) => {
@@ -403,34 +471,85 @@ export class MagicMapComponent implements OnInit {
       options.hideLimitLabels = true;
 
       options.disabled = true;
+      return;
     }
 
     this.sliderOptions = options;
+    this.currentSliderFloor = this.sliderOptions.floor;
+    this.currentSliderCeil = this.sliderOptions.ceil;
   }
 
   handleSliderChange(event: ChangeContext): void {
-    this.allGroupLayers.filter(g => g.isSelected()).forEach(g => {
-        g.getCurrentMarkers().forEach((m: CustomMarker) => {
-          let tweetDate = new Date(m.tweet.createdAt.toString()).getTime();
-          if (!(tweetDate > event.value && tweetDate < event.highValue)) {
-            g.removeLayer(m);
-            g.filteredMarkers.push(m);
-          }
-        });
-
-        //Handle unfilter markers
-        for (let i = g.filteredMarkers.length; i--;) {
-          let marker = g.filteredMarkers[i];
-          let tweetDate = new Date(marker.tweet.createdAt.toString()).getTime();
-
-          //Added 23:59 hours to search in the selected day as well
-          if (tweetDate >= event.value && tweetDate <= event.highValue + 86340000) {
-            g.addLayer(marker);
-            g.filteredMarkers.splice(i, 1);
-          }
-        }
-      }
+    this.allGroupLayers.forEach(g => this.handleSliderChangeForGroup(g, {
+        floor: event.value,
+        ceil: event.highValue
+      })
     );
+
+    this.currentSliderFloor = event.value;
+    this.currentSliderCeil = event.highValue;
+
+  }
+
+  //TODO: Use this in case of filtering from BE.
+  createFilterDTO(): FilterItemDto {
+    let filterDTO = new FilterItemDto();
+    filterDTO.range = { start: new Date(this.currentSliderFloor), end: new Date(this.currentSliderCeil) };
+    filterDTO.filters.push({ type: 'LANGUAGE', values: []});
+    filterDTO.filters.push({ type: 'SOURCE', values: this.selectedFilter['SOURCE'] });
+    return filterDTO;
+  }
+
+  handleSliderChangeForGroup(group: CustomLayerGroup, event: any): void {
+    let toRemoveMarkers: CustomMarker[] = [];
+    let toAddMarkers: CustomMarker[] = [];
+
+    group.getCurrentMarkers().forEach((m: CustomMarker) => {
+      let tweetDate = new Date(m.tweet.createdAt.toString()).getTime();
+      if (!(tweetDate > event.floor && tweetDate < event.ceil)) {
+        group.removeLayer(m);
+        // toRemoveMarkers.push(m);
+        group.filteredMarkers.push(m);
+      }
+    });
+
+    //Handle unfilter markers
+    for (let i = group.filteredMarkers.length; i--;) {
+      let marker = group.filteredMarkers[i];
+      let tweetDate = new Date(marker.tweet.createdAt.toString()).getTime();
+
+      //Added 23:59 hours to search in the selected day as well
+      if (tweetDate >= event.floor && tweetDate <= event.ceil + 86340000) {
+        group.addLayer(marker);
+        // toAddMarkers.push(marker);
+        group.filteredMarkers.splice(i, 1);
+      }
+    }
+
+    this.updateFilterCount(group);
+    // group.removeLayers(toRemoveMarkers);
+    // group.addLayers(toAddMarkers);
+  }
+
+  updateFilterCount(group: CustomLayerGroup): void {
+    let filter;
+
+    switch (group.getType()) {
+      case "SOURCE":
+        this.sourcesFromGroups.filter(s => s.filterValue == group.getGroupName()).forEach(f => {
+          f.count = group.getCurrentMarkers().length;
+        });
+        break;
+      case "LANGUAGE":
+        filter = this.languagesFromGroups.filter(s => s.filterValue == group.getGroupName()).forEach(f => {
+          f.count = group.getCurrentMarkers().length;
+        });
+        break;
+
+      default: {
+      }
+
+    }
   }
 
   // ############################MARKER UTILS AREA######################
@@ -438,14 +557,11 @@ export class MagicMapComponent implements OnInit {
     this.markers.forEach(m => {
       if (m.tweet.id === id) {
         this.map.flyTo(m.getLatLng(), 18, { duration: 2, easeLinearity: 0.5 });
-
-        //TODO: See if fire a click event is really necessary.
-        // m.fire('click')
       }
     });
   }
 
-  getCurrentlyActiveMarkers(): any[] {
+  getCurrentlyActiveMarkers(): CustomMarker[] {
 
     return this.allGroupLayers.filter(g => g.isSelected()).map(g => g.getCurrentMarkers()).reduce((p, c) => {
       return p.concat(c);
@@ -467,9 +583,6 @@ export class MagicMapComponent implements OnInit {
           });
         }.bind(this));
 
-        if (marker === undefined) {
-          console.log("ewtsdfasdf");
-        }
         return marker;
       }
     });
@@ -483,6 +596,20 @@ export class MagicMapComponent implements OnInit {
 
   toggleMessageMenu() {
     this.messageMenuState = this.messageMenuState === 'in' ? 'out' : 'in';
+  }
+
+  // ########################### STATISTICS ########################################
+  getStatistics() {
+    let filterDTO = new FilterItemDto();
+    filterDTO.filterValues = this.getAllActiveFilters();
+    filterDTO.range.start = new Date(this.currentSliderFloor);
+    filterDTO.range.end = new Date(this.currentSliderCeil);
+    let stats = this.tweetService.getStatisticsBasedOnFilters(filterDTO);
+
+  }
+
+  getAllActiveFilters(): string[]{
+    return [].concat.apply([], this.filters.map(f => this.selectedFilter[f].map((filter: FilterDTO) => filter.filterValue)));
   }
 
 

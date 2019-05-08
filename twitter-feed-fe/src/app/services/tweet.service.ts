@@ -6,6 +6,7 @@ import 'rxjs/add/operator/map';
 import { Subject } from 'rxjs/Subject';
 // tslint:disable-next-line:import-blacklist
 import 'rxjs/Rx';
+import { FilterItemDto } from "../models/filter-item-dto";
 
 @Injectable({
   providedIn: 'root'
@@ -49,6 +50,10 @@ export class TweetService {
 
   public getTweetsByIds(ids: number[]): Observable<Tweet[]> {
     return this.http.get<Tweet[]>(this.tweetUrl + "/list?ids=" + ids.join(","))
+  }
+
+  public getStatisticsBasedOnFilters(filters: FilterItemDto): Observable<Tweet[]> {
+    return this.http.post<Tweet[]>(this.tweetUrl + "/filter", filters);
   }
 
   public retrieveTweets(): Observable<any[]> {

@@ -1,25 +1,12 @@
 <div *ngIf="areOptionsLoaded()">
 
   <div class="loading-wrapper" *ngIf="markersLoaded">
-    <div class="button-wrapper">
-      <button *ngIf="filterMenuState === 'in'" (click)="toggleMenu()" class="btn">
-        <span>toggle menu</span>
-      </button>
-
-      <button *ngIf="messageMenuState === 'out'" (click)="toggleMessageMenu()" class="btn message-button">
-        <span>Toggle message menu</span>
-      </button>
-    </div>
-
     <div class="time-slider-wrapper">
       <ng5-slider [(value)]="value" [(highValue)]="highValue" [options]="sliderOptions"
                   (userChangeEnd)="handleSliderChange($event)"></ng5-slider>
     </div>
-  </div>
 
-
-  <ngx-loading [show]="!markersLoaded" [config]="{ backdropBorderRadius: '14px' }"></ngx-loading>
-  <div class="slide-menu left" [@slideInOut]="filterMenuState">
+    <div class="slide-menu left" [@slideInOut]="filterMenuState">
 
     <!--LANGUAGE SELECT-->
     <div class="dropdown-wrapper">
@@ -72,10 +59,12 @@
       </angular2-multiselect>
     </div>
 
-
-    <button class="close-button" (click)="toggleMenu()">
-      <i class="ion-arrow-left-c"></i>
-    </button>
+    <div class="close-button-wrapper">
+      <button class="close-button" (click)="toggleMenu()">
+        <i class="ion-arrow-left-c" *ngIf="filterMenuState ==='out'"></i>
+        <i class="ion-arrow-right-c" *ngIf="filterMenuState === 'in'"></i>
+      </button>
+    </div>
 
   </div>
   <div class="slide-menu right" [@slideInOut]="messageMenuState">
@@ -101,11 +90,20 @@
       </div>
     </div>
 
-    <button class="close-button" (click)="toggleMessageMenu()">
-      <i class="ion-arrow-right-c"></i>
-    </button>
+    <div class="close-button-wrapper">
+      <button *ngIf="messageMenuState === 'out'" class="close-button" (click)="toggleMessageMenu()">
+        <i class="ion-arrow-left-c"></i>
+      </button>
+
+      <button *ngIf="messageMenuState === 'in'" class="close-button" (click)="toggleMessageMenu()">
+        <i class="ion-arrow-right-c"></i>
+      </button>
+    </div>
+  </div>
   </div>
 
+
+  <ngx-loading [show]="!markersLoaded" [config]="{ backdropBorderRadius: '14px' }"></ngx-loading>
 
   <div class="map-wrapper">
     <div id="myMap"

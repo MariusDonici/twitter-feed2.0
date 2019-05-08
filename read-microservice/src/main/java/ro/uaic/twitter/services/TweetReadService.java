@@ -1,5 +1,6 @@
 package ro.uaic.twitter.services;
 
+import ro.uaic.twitter.models.dtos.FilterDTO;
 import ro.uaic.twitter.models.dtos.TweetDTO;
 import ro.uaic.twitter.models.entities.TweetEntity;
 
@@ -13,4 +14,6 @@ public interface TweetReadService {
     List<TweetDTO> retrieveTweetsByIdPaginated(List<String> ids);
 
     TweetDTO retrieveTweetById(String id);
+
+//    List<TweetDTO> filterTweets(FilterDTO filter);
 }

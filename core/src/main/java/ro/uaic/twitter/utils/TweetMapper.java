@@ -3,9 +3,14 @@ package ro.uaic.twitter.utils;
 import org.springframework.stereotype.Component;
 import ro.uaic.twitter.models.entities.TweetDetailsEntity;
 import ro.uaic.twitter.models.entities.TweetEntity;
+import twitter4j.HashtagEntity;
 import twitter4j.Status;
 
+import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
@@ -19,8 +24,8 @@ public class TweetMapper {
         tweet.setGeoLocation(status.getGeoLocation());
         tweet.setId(Long.toString(status.getId()));
         tweet.setLanguage(status.getLang());
-        tweet.setIsRetweet(status.isRetweet());
         tweet.setSource(aggregateSimilarSources(status.getSource()));
+        tweet.setHashtags(Arrays.stream(status.getHashtagEntities()).map(HashtagEntity::getText).collect(Collectors.toList()));
 
         tweetDetails.setUser(status.getUser());
         tweetDetails.setListOfCountrieWitheld(status.getWithheldInCountries());
@@ -60,6 +65,5 @@ public class TweetMapper {
 
         return aggregatedString;
     }
-
 }
 

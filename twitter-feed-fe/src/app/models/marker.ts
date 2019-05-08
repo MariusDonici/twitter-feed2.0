@@ -18,4 +18,8 @@ export class CustomMarker extends L.Marker {
     this.applicableFilter['LANGUAGE'] = tweet.language;
     this.applicableFilter['SOURCE'] = tweet.source;
   }
+
+  getMarkerFilters(): string[]{
+    return [this.applicableFilter['LANGUAGE'],this.applicableFilter['SOURCE']];
+  }
 }

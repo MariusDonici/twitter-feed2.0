@@ -2,6 +2,7 @@ package ro.uaic.twitter.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import ro.uaic.twitter.models.dtos.FilterDTO;
 import ro.uaic.twitter.models.dtos.TweetDTO;
 import ro.uaic.twitter.services.TweetReadService;
 
@@ -18,11 +19,11 @@ public class TweetReadController {
     public TweetReadController(TweetReadService tweetReadService) {
         this.tweetReadService = tweetReadService;
     }
-//
-//    @GetMapping("/retrieve")
-//    public List<TweetEntity> retrieveTweets(@PathParam("page") Long page, @PathParam("size") Long size) {
-//        return tweetReadService.retrieveAllTweets(page, size);
-//    }
+    //
+    //    @GetMapping("/retrieve")
+    //    public List<TweetEntity> retrieveTweets(@PathParam("page") Long page, @PathParam("size") Long size) {
+    //        return tweetReadService.retrieveAllTweets(page, size);
+    //    }
 
     @GetMapping
     public List<TweetDTO> retrieveTweets() {
@@ -30,12 +31,17 @@ public class TweetReadController {
     }
 
     @GetMapping("/{tweetId}")
-    public TweetDTO retrieveTweetById(@PathVariable("tweetId") String tweetId){
+    public TweetDTO retrieveTweetById(@PathVariable("tweetId") String tweetId) {
         return tweetReadService.retrieveTweetById(tweetId);
     }
 
     @GetMapping("/list")
-    public List<TweetDTO> retrieveTweetByIds(@RequestParam("ids") List<String> ids){
+    public List<TweetDTO> retrieveTweetByIds(@RequestParam("ids") List<String> ids) {
         return tweetReadService.retrieveTweetsByIdPaginated(ids);
     }
+//
+//    @PostMapping("/filter")
+//    public List<TweetDTO> filterTweets(@RequestBody FilterDTO filter) {
+//        return tweetReadService.filterTweets(filter);
+//    }
 }
